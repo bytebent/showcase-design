@@ -1,0 +1,655 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>bytebent Design Document</title>
+<style>
+:root{
+  --platinum:#dcdce0; --platinum-hi:#ececef; --platinum-lo:#c4c4ca; --etch:#9c9ca4;
+  --ink:#000; --ink-soft:#4a4a52; --inset:#f4f4f6; --desk:#b9b9c0;
+  --green:#61bb46; --yellow:#fdb827; --orange:#f5821f; --red:#e03a3e; --purple:#963d97; --blue:#009ddc;
+  --blue-dk:#00699a; --red-dk:#9e1f23; --graphite:#6e6e78;
+  --ui:"Lucida Grande","Lucida Sans Unicode",Geneva,Verdana,sans-serif;
+  --mono:Monaco,"Courier New",monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  background:radial-gradient(circle at 1px 1px, rgba(0,0,0,.09) 1px, transparent 1.5px) 0 0/6px 6px, var(--desk);
+  font:14px/1.55 var(--ui); color:var(--ink); padding:0 16px 48px;
+}
+a{color:var(--blue-dk)}
+code{font:12px var(--mono);background:var(--inset);border:1px solid #c8c8ce;border-radius:3px;padding:0 4px}
+
+.menubar{position:sticky;top:0;z-index:5;margin:0 -16px 28px;display:flex;align-items:center;gap:16px;
+  padding:5px 16px;background:linear-gradient(#fbfbfc,#dedee2);border-bottom:1px solid #8e8e96;
+  box-shadow:0 1px 3px rgba(0,0,0,.15);font-size:12px;white-space:nowrap;overflow-x:auto}
+.menubar b{font-size:13px}
+.menubar a{color:var(--ink);text-decoration:none}
+.menubar a:hover{background:var(--blue);color:#fff;border-radius:3px;padding:0 4px;margin:0 -4px}
+.menubar .meta{margin-left:auto;color:var(--ink-soft)}
+
+.wrap{max-width:960px;margin:0 auto}
+.stripes{display:inline-flex;flex-direction:column;width:20px;height:16px;border-radius:3px;overflow:hidden;box-shadow:0 0 0 1px rgba(0,0,0,.35);flex:none;vertical-align:middle}
+.stripes.h{flex-direction:row}
+.stripes i{flex:1}
+
+.window{
+  background:repeating-linear-gradient(0deg, rgba(255,255,255,.55) 0 1px, rgba(255,255,255,0) 1px 2px, rgba(0,0,0,.035) 2px 3px, rgba(0,0,0,0) 3px 4px), var(--platinum);
+  border:1px solid #7d7d86;border-radius:9px;box-shadow:0 1px 0 #fff inset, 0 12px 32px rgba(0,0,0,.22);
+  overflow:hidden;margin-bottom:22px;
+}
+.titlebar{display:flex;align-items:center;gap:10px;padding:7px 12px 6px;background:linear-gradient(#f6f6f8,#d6d6db);border-bottom:1px solid #8e8e96}
+.closebox{width:12px;height:12px;border:1px solid #6e6e78;border-radius:2px;background:linear-gradient(#fff,#cfcfd5);flex:none}
+.titlebar .lines{flex:1;height:9px;background:repeating-linear-gradient(0deg,#9c9ca4 0 1px,transparent 1px 3px);opacity:.6;min-width:12px}
+.titlebar .t{font-weight:700;font-size:12px;white-space:nowrap}
+.wbody{padding:20px 24px}
+.wbody > :first-child{margin-top:0}
+.wbody > :last-child{margin-bottom:0}
+
+h1{margin:0 0 6px;font-size:38px;line-height:1.02;letter-spacing:-1.4px}
+h1 span{background:linear-gradient(180deg,var(--green) 0 17%,var(--yellow) 17% 34%,var(--orange) 34% 51%,var(--red) 51% 68%,var(--purple) 68% 85%,var(--blue) 85%);
+  -webkit-background-clip:text;background-clip:text;color:transparent}
+h2{font-size:20px;letter-spacing:-.4px;margin:0 0 10px}
+h3{font-size:14px;margin:22px 0 6px}
+p{margin:0 0 12px}
+ul,ol{margin:0 0 12px;padding-left:20px}
+li{margin:3px 0}
+.lede{font-size:16px;color:var(--ink-soft);max-width:60ch}
+.soft{color:var(--ink-soft)}
+.small{font-size:12px}
+
+.sect{display:flex;align-items:center;gap:12px;margin:38px 0 14px}
+.sect .num{font:700 11px var(--mono);background:#000;color:#3f3;padding:2px 6px;border-radius:2px}
+.sect h2{margin:0;font-size:13px;text-transform:uppercase;letter-spacing:1.5px}
+.sect .rule{flex:1;height:2px;border-radius:2px;background:linear-gradient(90deg,var(--green),var(--yellow),var(--orange),var(--red),var(--purple),var(--blue));opacity:.8}
+
+.meta-grid{display:grid;grid-template-columns:auto 1fr;gap:3px 14px;font-size:12px;background:var(--platinum-hi);border:1px solid var(--etch);border-radius:5px;padding:9px 12px;margin-top:16px}
+.meta-grid b{font-weight:700}
+
+.lcd{background:#0b0b0e;border-radius:6px;padding:10px;box-shadow:0 0 0 1px #000,0 2px 6px rgba(0,0,0,.5) inset;margin:16px 0 4px}
+.lcd canvas{display:block;width:100%;height:110px}
+.lcd .cap{display:flex;justify-content:space-between;font:11px/1 var(--mono);color:#8f8;margin-top:7px;gap:8px;flex-wrap:wrap}
+
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.panel{background:var(--platinum-hi);border:1px solid var(--etch);border-radius:6px;padding:12px 14px;box-shadow:0 1px 0 #fff}
+.panel h3{margin-top:0}
+
+/* tables */
+.tbl{width:100%;border-collapse:collapse;font-size:12.5px;background:var(--inset);border:1px solid var(--etch);border-radius:5px;overflow:hidden}
+.tbl th{text-align:left;background:linear-gradient(#f6f6f8,#d6d6db);border-bottom:1px solid #8e8e96;padding:6px 9px;font-size:11px;text-transform:uppercase;letter-spacing:.5px}
+.tbl td{padding:6px 9px;border-top:1px solid #d6d6db;vertical-align:top}
+.tbl tr:first-child td{border-top:0}
+.scroll{overflow-x:auto;margin:0 0 14px}
+
+/* status leds */
+.status{display:inline-flex;align-items:center;gap:6px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap}
+.led{width:9px;height:9px;border-radius:50%;box-shadow:0 0 0 1px rgba(0,0,0,.45) inset;flex:none}
+.led.on{background:radial-gradient(circle at 35% 30%,#d6ffc8,var(--green) 60%,#3a7a28);box-shadow:0 0 6px var(--green),0 0 0 1px rgba(0,0,0,.45) inset}
+.led.mid{background:radial-gradient(circle at 35% 30%,#fff1c4,var(--yellow) 60%,#a77408)}
+.led.off{background:radial-gradient(circle at 35% 30%,#eee,#9c9ca4 60%,#6e6e78)}
+
+/* swatches */
+.swatches{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin:8px 0 14px}
+.sw{border:1px solid #7d7d86;border-radius:6px;overflow:hidden;background:var(--inset);font-size:11px}
+.sw i{display:block;height:44px}
+.sw div{padding:5px 7px}
+.sw b{display:block;font-size:11.5px}
+.sw code{font-size:10.5px;padding:0 3px}
+
+/* specimens */
+.specimens{display:flex;flex-wrap:wrap;gap:18px;align-items:center;padding:14px;background:var(--platinum-hi);border:1px solid var(--etch);border-radius:6px;margin:8px 0 14px}
+.gel{display:inline-flex;align-items:center;padding:7px 18px;border-radius:999px;font:700 12px var(--ui);color:#fff;text-decoration:none;border:1px solid var(--blue-dk);position:relative;
+  background:linear-gradient(#8fd8f7,var(--blue) 48%,#0086c0 52%,#38b8ea);box-shadow:0 2px 4px rgba(0,0,0,.3), 0 1px 0 rgba(255,255,255,.5) inset;text-shadow:0 -1px 0 rgba(0,0,0,.3)}
+.gel::before{content:"";position:absolute;left:10px;right:10px;top:2px;height:45%;border-radius:999px;background:linear-gradient(rgba(255,255,255,.75),rgba(255,255,255,.1))}
+.gel.grey{color:#222;border-color:#7d7d86;text-shadow:0 1px 0 #fff;background:linear-gradient(#fff,#d8d8dd 48%,#c4c4ca 52%,#e6e6ea)}
+.gel.red{border-color:var(--red-dk);background:linear-gradient(#f7a4a6,var(--red) 48%,#c42a2e 52%,#ee6a6d)}
+.knob{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px}
+.dial{--v:.6;--c:var(--green);position:relative;width:52px;height:52px;border-radius:50%;
+  background:conic-gradient(from 225deg, var(--c) 0 calc(var(--v)*270deg), #b9b9c0 calc(var(--v)*270deg) 270deg, transparent 270deg)}
+.dial::before{content:"";position:absolute;inset:4px;border-radius:50%;background:var(--platinum-hi)}
+.dial .cap{position:absolute;inset:7px;border-radius:50%;
+  background:radial-gradient(circle at 50% 22%, rgba(255,255,255,.95) 0 18%, rgba(255,255,255,0) 46%), radial-gradient(circle at 50% 80%, #f7f7fa, #c8c8ce 60%, #9a9aa3);
+  box-shadow:0 2px 3px rgba(0,0,0,.35), 0 0 0 1px #7d7d86}
+.dial .cap::after{content:"";position:absolute;left:50%;top:4px;width:3px;height:30%;margin-left:-1.5px;border-radius:2px;background:#1a1a1e;
+  transform-origin:50% 15px;transform:rotate(calc(-135deg + var(--v)*270deg))}
+.val{font:700 11px var(--ui);background:var(--inset);box-shadow:inset 0 1px 2px rgba(0,0,0,.25);border-radius:3px;padding:1px 6px}
+.badge88{width:88px;height:31px;border:1px solid #333;display:inline-flex;align-items:center;justify-content:center;text-align:center;
+  font:700 9px/1.05 Verdana,sans-serif;letter-spacing:.3px;box-shadow:1px 1px 0 #fff inset,-1px -1px 0 rgba(0,0,0,.3) inset}
+
+/* product cards */
+.cards{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin:6px 0 14px}
+.card{background:var(--inset);border:1px solid var(--etch);border-radius:7px;padding:12px 14px;display:flex;flex-direction:column;gap:6px}
+.card .hd{display:flex;align-items:center;gap:8px;justify-content:space-between;flex-wrap:wrap}
+.card h4{margin:0;font-size:15px;letter-spacing:-.3px;display:flex;align-items:center;gap:8px}
+.card .acc{width:12px;height:12px;border-radius:3px;box-shadow:0 0 0 1px rgba(0,0,0,.35)}
+.card p{margin:0;font-size:13px}
+.card .k{font-size:11.5px;color:var(--ink-soft)}
+.card .k b{color:var(--ink)}
+
+.callout{border-left:4px solid var(--yellow);background:#fff8e6;padding:9px 12px;border-radius:0 5px 5px 0;margin:0 0 14px;font-size:13px}
+.callout.blue{border-color:var(--blue);background:#e8f6fc}
+.callout.red{border-color:var(--red);background:#fdeced}
+
+.flow{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:8px 0 16px}
+.step{background:var(--inset);border:1px solid var(--etch);border-radius:6px;padding:9px;font-size:12px;position:relative}
+.step b{display:block;font-size:12.5px;margin-bottom:3px}
+.step .n{font:700 10px var(--mono);color:#fff;background:var(--graphite);border-radius:2px;padding:0 4px;display:inline-block;margin-bottom:4px}
+
+.tag{display:inline-block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;padding:0 6px;border-radius:8px;border:1px solid #9c9ca4;background:#fff;vertical-align:1px;white-space:nowrap}
+.tag.dec{background:#e6f5df;border-color:#61bb46}
+.tag.sug{background:#fff3d6;border-color:#d99a0b}
+.tag.open{background:#fdeced;border-color:var(--red)}
+
+.toc{columns:2;column-gap:24px;margin:0;padding-left:20px;font-size:13px}
+.footer{text-align:center;color:var(--ink-soft);font-size:11px;margin-top:26px}
+.counter{font:12px var(--mono);background:#000;color:#3f3;padding:2px 6px;border-radius:2px;letter-spacing:2px}
+
+@media (max-width:760px){
+  .cols,.cards{grid-template-columns:1fr}
+  .flow{grid-template-columns:1fr 1fr}
+  .toc{columns:1}
+  h1{font-size:30px}
+  .wbody{padding:16px}
+}
+@media print{
+  body{background:#fff;padding:0}
+  .menubar{position:static}
+  .window{box-shadow:none;break-inside:avoid-page}
+}
+</style>
+</head>
+<body>
+
+<nav class="menubar">
+  <span class="stripes" aria-hidden="true"><i style="background:var(--green)"></i><i style="background:var(--yellow)"></i><i style="background:var(--orange)"></i><i style="background:var(--red)"></i><i style="background:var(--purple)"></i><i style="background:var(--blue)"></i></span>
+  <b>bytebent</b>
+  <a href="#brand">Brand</a>
+  <a href="#products">Products</a>
+  <a href="#tech">Tech</a>
+  <a href="#business">Business</a>
+  <a href="#roadmap">Roadmap</a>
+  <a href="#open">Open questions</a>
+  <span class="meta">Design Document · v0.3 · Updated 19 Oct 2026</span>
+</nav>
+
+<div class="wrap">
+
+<!-- COVER -->
+<section class="window">
+  <div class="titlebar"><span class="closebox"></span><span class="lines"></span><span class="t">DesignDocument.txt</span><span class="lines"></span></div>
+  <div class="wbody">
+    <h1><span>bytebent</span><br>design document</h1>
+    <p class="lede">A one-person audio plugin label that treats sound like data or like a body: byte budgets and error codes, a larynx and a mouth, a dolphin's phonic lips, a bird's syrinx, turned into effects and instruments you can actually play.</p>
+    <div class="lcd">
+      <canvas id="hero" width="1200" height="220" aria-label="Decorative loop buffer animation"></canvas>
+      <div class="cap"><span>BUDGET 24 kB/s</span><span id="heroStat">FRESH 61%</span><span>com.bytebent.*</span></div>
+    </div>
+    <div class="meta-grid">
+      <b>Company</b><span>Bytebent Audio, styled <b>bytebent</b> (lowercase) everywhere except legal and plugin-host metadata</span>
+      <b>Formerly</b><span>fl-vibez (retired; the old build is no longer downloadable)</span>
+      <b>GitHub</b><span><a href="https://github.com/bytebent">github.com/bytebent</a> · 8 product repos plus <code>showcase-design</code> for this document and the showcase page</span>
+      <b>Status</b><span>4 plugins built: Bandwidth Crusher v0.1.1, Bandwidth Brawl v0.1.0, Throat v0.1.0 and mouth-tube v0.1.0, all downloadable. 3 prototypes (Dolphin, Syrinx, krill), 1 in design (beak-tube). 6 concepts in the Lab.</span>
+      <b>Updated</b><span>19 October 2026 (v0.3). v0.2 18 October, first version 17 October 2026.</span>
+      <b>This document</b><span>Collects what has been decided so far across our chats, the showcase page and the repos, and marks what is still open.</span>
+    </div>
+  </div>
+</section>
+
+<section class="window">
+  <div class="titlebar"><span class="closebox"></span><span class="lines"></span><span class="t">Contents</span><span class="lines"></span></div>
+  <div class="wbody">
+    <ol class="toc">
+      <li><a href="#vision">Vision and principles</a></li>
+      <li><a href="#brand">Brand identity</a></li>
+      <li><a href="#ui">Plugin interface system</a></li>
+      <li><a href="#products">Product line</a></li>
+      <li><a href="#tech">Technical architecture</a></li>
+      <li><a href="#workflow">How a plugin gets made</a></li>
+      <li><a href="#repos">Repositories</a></li>
+      <li><a href="#business">Business model</a></li>
+      <li><a href="#roadmap">Roadmap</a></li>
+      <li><a href="#open">Open questions</a></li>
+    </ol>
+    <p class="small soft" style="margin-top:12px">Labels used throughout: <span class="tag dec">Decided</span> you chose it, <span class="tag sug">Proposed</span> I suggested it and you haven't committed, <span class="tag open">Open</span> still to decide.</p>
+  </div>
+</section>
+
+<!-- 1 VISION -->
+<div class="sect" id="vision"><span class="num">01</span><h2>Vision and principles</h2><span class="rule"></span></div>
+<section class="window">
+  <div class="titlebar"><span class="closebox"></span><span class="lines"></span><span class="t">ReadMe.txt</span><span class="lines"></span></div>
+  <div class="wbody">
+    <p>bytebent makes small, odd effects for producers who like happy accidents. Each plugin borrows a mechanism from somewhere outside music (data compression, error-correcting codes, synchronising pendulum clocks) or models how a body actually makes sound (the human larynx and mouth, a dolphin's phonic lips, a bird's syrinx), then turns it into a sound you can perform and pushes it past what any real animal can do. Strange on purpose, built to be played.</p>
+    <div class="cols">
+      <div class="panel">
+        <h3>Product principles</h3>
+        <ul>
+          <li><b>One idea per plugin.</b> Each product has a single concept you can explain in one line ("only N kB can change per second").</li>
+          <li><b>One knob that matters.</b> The core concept lives on one hero control (Budget, Coupling, Bit depth). Everything else shapes it.</li>
+          <li><b>Show the invisible.</b> Every plugin has a live view of its hidden state: fresh vs. stale audio, territory, rank lines.</li>
+          <li><b>Sidechain powered.</b> Most products take a second input so one track can reshape another.</li>
+          <li><b>Names say what they do.</b> Product names are "what it works on + what it does to it" (Bandwidth Brawl). No abstract or alliterative names.</li>
+        </ul>
+      </div>
+      <div class="panel">
+        <h3>Quality principles</h3>
+        <ul>
+          <li><b>Never crash the host.</b> Real-time safe DSP: nothing allocated, locked or loaded on the audio thread.</li>
+          <li><b>Same sound at any buffer size.</b> Fixed internal control blocks, latency reported to the DAW.</li>
+          <li><b>Repeatable renders.</b> Seed plus reset-on-play, so a bounce sounds the same every time.</li>
+          <li><b>Reference first.</b> A Python or JavaScript reference defines the sound; the C++ port is tested against it.</li>
+          <li><b>Honest about how it's made.</b> <span class="tag dec">Decided</span> Never claim the plugins are made without AI. AI help can be mentioned plainly, e.g. "designed by me, built with AI help." The showcase's old "NO AI PRESETS" badge was removed for this reason.</li>
+          <li><b>Science-based bodies.</b> The animal instruments start from published research, kept in each repo's <code>research.md</code>, and stay inside human hearing range.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 2 BRAND -->
+<div class="sect" id="brand"><span class="num">02</span><h2>Brand identity</h2><span class="rule"></span></div>
+<section class="window">
+  <div class="titlebar"><span class="closebox"></span><span class="stripes"><i style="background:var(--green)"></i><i style="background:var(--yellow)"></i><i style="background:var(--orange)"></i><i style="background:var(--red)"></i><i style="background:var(--purple)"></i><i style="background:var(--blue)"></i></span><span class="t">Brand.prefs</span><span class="lines"></span></div>
+  <div class="wbody">
+    <h2>Name</h2>
+    <div class="scroll"><table class="tbl">
+      <tr><th>Use</th><th>Form</th><th>Where</th></tr>
+      <tr><td>Everyday</td><td><b>bytebent</b></td><td>Website, socials, plugin headers, copy</td></tr>
+      <tr><td>Formal</td><td><b>Bytebent Audio</b></td><td>Manufacturer name in DAWs, legal, invoices</td></tr>
+      <tr><td>Machine</td><td><code>bytebent</code>, <code>com.bytebent.&lt;plugin&gt;</code>, code <code>Bytb</code></td><td>GitHub, bundle IDs, AU manufacturer code</td></tr>
+    </table></div>
+    <p class="small"><span class="tag dec">Decided</span> Chosen over Dunning-Kruger Audio, Fumblr, iGuess and Lossy. <span class="tag open">Open</span> Domain (bytebent.com / .audio), Instagram and YouTube handles, and an EUIPO trademark check haven't been confirmed yet.</p>
+
+    <h2 style="margin-top:22px">Look: Y2K light mode</h2>
+    <p><span class="tag dec">Decided</span> Late-90s/early-2000s desktop computing in light mode: platinum pinstriped panels, black type, glossy gel controls, and the six classic rainbow stripe colours as accents. The palette and era feel only; no third-party logos.</p>
+
+    <h3>Neutrals</h3>
+    <div class="swatches">
+      <div class="sw"><i style="background:var(--platinum)"></i><div><b>Platinum</b><code>#dcdce0</code> panels</div></div>
+      <div class="sw"><i style="background:var(--platinum-hi)"></i><div><b>Platinum hi</b><code>#ececef</code> inner panels</div></div>
+      <div class="sw"><i style="background:var(--etch)"></i><div><b>Etch</b><code>#9c9ca4</code> borders</div></div>
+      <div class="sw"><i style="background:var(--desk)"></i><div><b>Desk</b><code>#b9b9c0</code> page backdrop</div></div>
+      <div class="sw"><i style="background:var(--graphite)"></i><div><b>Graphite</b><code>#6e6e78</code> neutral rings</div></div>
+      <div class="sw"><i style="background:#0b0b0e"></i><div><b>Screen</b><code>#0b0b0e</code> live views</div></div>
+    </div>
+    <h3>Stripe accents</h3>
+    <div class="swatches">
+      <div class="sw"><i style="background:var(--green)"></i><div><b>Green</b><code>#61bb46</code></div></div>
+      <div class="sw"><i style="background:var(--yellow)"></i><div><b>Yellow</b><code>#fdb827</code></div></div>
+      <div class="sw"><i style="background:var(--orange)"></i><div><b>Orange</b><code>#f5821f</code></div></div>
+      <div class="sw"><i style="background:var(--red)"></i><div><b>Red</b><code>#e03a3e</code></div></div>
+      <div class="sw"><i style="background:var(--purple)"></i><div><b>Purple</b><code>#963d97</code></div></div>
+      <div class="sw"><i style="background:var(--blue)"></i><div><b>Blue</b><code>#009ddc</code></div></div>
+    </div>
+    <p>The six stripes are the brand mark: the full stack belongs to the company and to Bandwidth Crusher. Other products usually lead with one stripe (or a pair) as their identity.</p>
+    <p><b>One accent per product is a guideline, not a hard rule.</b> A single colour keeps a product easy to recognise, and a pair suits a two-input "versus" product (Brawl uses blue for A and red for B). A product can use more colours when its controls or live view need them: Throat uses red and blue, mouth-tube uses blue, purple and red. Dolphin is blue <span class="tag dec">Decided</span>. krill gives its six pond slots the stripe colours in stripe order <span class="tag dec">Decided</span>. Syrinx green and beak-tube green + yellow are used on the showcase page <span class="tag sug">Proposed</span>.</p>
+
+    <h3>Type</h3>
+    <div class="cols">
+      <div class="panel">
+        <p style="font:700 22px var(--ui);margin:0">Lucida Grande</p>
+        <p class="small soft" style="margin:0">UI and body. Fallbacks: Lucida Sans Unicode, Geneva, Verdana. Headings are bold with slight negative tracking; section labels are uppercase with wide tracking.</p>
+      </div>
+      <div class="panel" style="background:#0b0b0e;color:#8f8;border-color:#000">
+        <p style="font:16px var(--mono);margin:0">BUDGET 24 kB/s</p>
+        <p class="small" style="margin:0;color:#8f8;opacity:.8">Monaco / Courier for LCD readouts and counters only, green on black.</p>
+      </div>
+    </div>
+
+    <h3>Voice</h3>
+    <ul>
+      <li>Plain, short, a little dry. Say what the plugin does to your audio in one line: "Two tracks. One loop. One budget. Let them fight."</li>
+      <li>Explain the mechanism, then the sound: "Whatever doesn't get updated keeps playing old audio: smears, ghosts, stutters and fizz."</li>
+      <li>No hype words ("revolutionary", "game-changing"). Let the demo audio do the selling.</li>
+      <li>Era jokes are welcome in small doses: 88×31 badges, a visitor counter, "best viewed at 800×600".</li>
+    </ul>
+  </div>
+</section>
+
+<!-- 3 UI -->
+<div class="sect" id="ui"><span class="num">03</span><h2>Plugin interface system</h2><span class="rule"></span></div>
+<section class="window">
+  <div class="titlebar"><span class="closebox"></span><span class="lines"></span><span class="t">Interface Kit</span><span class="lines"></span></div>
+  <div class="wbody">
+    <p>All plugin UIs are HTML pages running inside the plugin's web view, so the same file opens in a browser as a design preview. Bandwidth Crusher's <code>ui/index.html</code> is the reference implementation.</p>
+    <div class="specimens" aria-label="Component specimens">
+      <span class="gel">Primary</span>
+      <span class="gel grey">Secondary</span>
+      <span class="gel red">Notify me</span>
+      <div class="knob"><div class="dial" style="--v:.62;--c:var(--green)"><div class="cap"></div></div><span>Budget</span><span class="val">40 kB/s</span></div>
+      <div class="knob"><div class="dial" style="--v:.35;--c:var(--yellow)"><div class="cap"></div></div><span>Loop</span><span class="val">120 ms</span></div>
+      <div class="knob"><div class="dial" style="--v:.8;--c:var(--red)"><div class="cap"></div></div><span>Mix</span><span class="val">100%</span></div>
+      <span class="status"><span class="led on"></span>Out now</span>
+      <span class="status"><span class="led mid"></span>In design</span>
+      <span class="status"><span class="led off"></span>Coming soon</span>
+      <span class="badge88" style="background:#000;color:#3f3">AU / VST3<br>READY</span>
+    </div>
+    <div class="scroll"><table class="tbl">
+      <tr><th>Element</th><th>Rule</th></tr>
+      <tr><td>Window</td><td>Platinum pinstripe body, 9px radius, gradient title bar with the product's stripe badge, name, and a one-line subtitle.</td></tr>
+      <tr><td>Live view</td><td>Black "screen" directly under the title bar, always first. Shows the plugin's hidden state. Fresh = colour, stale = fades to grey (or through the rainbow to dim blue in Crusher). White glowing line = playhead.</td></tr>
+      <tr><td>Groups</td><td>Etched fieldsets with a coloured dot in the legend. Each group owns one stripe colour and its knobs' value arcs use it.</td></tr>
+      <tr><td>Knobs</td><td>Glossy grey cap, black pointer, 270° value arc in the group colour, value readout in an inset box below. Hero control is the large size. Bipolar knobs fill from centre.</td></tr>
+      <tr><td>Interaction</td><td>Drag up/down, Shift for fine, double-click to reset, mouse wheel, arrow keys. Every knob is focusable and announces its value to screen readers.</td></tr>
+      <tr><td>Toggles</td><td>Aqua-style segmented controls and blue-gel checkboxes. Global options (stereo mode, reset on play, seed) live in the footer.</td></tr>
+      <tr><td>Size</td><td>Fixed window, about 780–820 × 460 px.</td></tr>
+      <tr><td>Motion</td><td>Live views animate; respect "reduce motion" by slowing to a few frames per second.</td></tr>
+    </table></div>
+  </div>
+</section>
+
+<!-- 4 PRODUCTS -->
+<div class="sect" id="products"><span class="num">04</span><h2>Product line</h2><span class="rule"></span></div>
+<section class="window">
+  <div class="titlebar"><span class="closebox"></span><span class="lines"></span><span class="t">Catalogue</span><span class="lines"></span></div>
+  <div class="wbody">
+    <p>Four families: the Bandwidth Series, the Voice pair, the Creatures and the Lab. Names shown are the current working names; renames still under discussion are listed with each card and in <a href="#open">Open questions</a>.</p>
+
+    <h2>The Bandwidth Series</h2>
+    <p class="soft">The flagship family, inspired by "Bad Apple but only N kB can change per second" videos. A short loop plays on repeat; the input tries to rewrite it under a strict byte budget.</p>
+    <div class="cards">
+      <div class="card">
+        <div class="hd"><h4><span class="stripes"><i style="background:var(--green)"></i><i style="background:var(--yellow)"></i><i style="background:var(--orange)"></i><i style="background:var(--red)"></i><i style="background:var(--purple)"></i><i style="background:var(--blue)"></i></span>Bandwidth Crusher</h4><span class="status"><span class="led on"></span>v0.1.1 shipped</span></div>
+        <p>Only N kB of the loop may change per second. Whatever isn't updated keeps playing stale audio: smears, ghosts, stutter and fizz.</p>
+        <p class="k"><b>Controls:</b> Budget 0.5–1000 kB/s, Bit depth 2–16, Greedy ↔ Random, Error threshold, Loop 1 ms–4 s or 1/64–4 bars synced, Memory, Chunk 1–4096 smp, Edge smoothing, In/Out gain, Dry/Wet, Shared/Split stereo budget, Reset on play, Seed.</p>
+        <p class="k"><b>Formats:</b> AU, VST3, Standalone · macOS universal · 10 ms reported latency · tested in Ableton Live</p>
+        <p class="k"><b>Rename?</b> "Bandwidth Crush" pairs better with Brawl <span class="tag open">Open</span></p>
+      </div>
+      <div class="card">
+        <div class="hd"><h4><span class="stripes h"><i style="background:var(--blue)"></i><i style="background:var(--red)"></i></span>Bandwidth Brawl</h4><span class="status"><span class="led on"></span>v0.1.0 built</span></div>
+        <p>Your track (A) and a sidechain (B) share one loop and one budget. A side only claims budget where its own input has changed since it last wrote there; the loser freezes on stale audio. Ducking that stalls instead of dips.</p>
+        <p class="k"><b>Fight:</b> Budget, Bias A↔B, Sharpness, Hold, Savings · <b>Buffer:</b> Loop, Chunk, Smoothing, Memory, Bits, Random · <b>I/O:</b> B Trim, Mix, Output</p>
+        <p class="k"><b>Views:</b> Territory strip (blue = A, red = B, grey = unclaimed) and a tug-of-war budget meter</p>
+        <p class="k"><b>Formats:</b> AU, VST3, Standalone · macOS universal · main input + sidechain bus · 10 ms reported latency · plugin code <code>Bwbr</code></p>
+        <p class="k"><b>State:</b> Full plugin in the repo: C++ DSP, JUCE wrapper, web UI, Python reference, compare tests, browser bench and Mac CI. Name <span class="tag dec">Decided</span></p>
+      </div>
+    </div>
+
+
+    <h2>The Creatures</h2>
+    <p class="soft">Animal voices built the same way as the Voice pair: a source instrument and, where it helps, a separate body effect, all modelled from research. krill uses these engines to make whole ambient pieces. On the showcase page as "in the works", with source links instead of downloads.</p>
+    <div class="cards">
+      <div class="card">
+        <div class="hd"><h4><span class="acc" style="background:var(--blue)"></span>Dolphin</h4><span class="status"><span class="led mid"></span>Prototype</span></div>
+        <p>A cetacean voice synth. Each voice has two phonic-lip sources: a <b>pulse</b> source whose rate runs from rhythm (codas, click trains) to pitch (creaks, squawks, burst pulses), and a <b>whistle</b> of a few pure partials with no mouth formants. Biphonation couples them, so whistles carry sidebands as in orca calls.</p>
+        <p class="k"><b>Controls:</b> Rate, Keytrack, Pattern, Coda, Jitter, Rubato, Ornament, Click tone and width, Ring, Vowel · whistle Pitch mode, Shape, Sweep, Time, Harmonics · Register, Biphon, Spread · Size · Mono/Poly, Glide, ADSR · four LFOs (From/To, free or synced)</p>
+        <p class="k"><b>State:</b> JavaScript reference engine, engine tests, a perf benchmark and a playable browser bench with a live DSP meter. C++ port and JUCE instrument next. Factory presets are for testing and likely stay out of the plugin.</p>
+        <p class="k"><b>Open:</b> vowel peak frequencies (set by ear), MPE for per-note bends</p>
+      </div>
+      <div class="card">
+        <div class="hd"><h4><span class="stripes h"><i style="background:var(--green)"></i><i style="background:var(--yellow)"></i><i style="background:var(--orange)"></i><i style="background:var(--red)"></i><i style="background:var(--purple)"></i><i style="background:var(--blue)"></i></span>krill</h4><span class="status"><span class="led mid"></span>Prototype · batch 10 of 11</span></div>
+        <p>A generator for long ambient pieces made by a pond of alien creatures. Each creature is a source (Throat or Dolphin), with or without a mouth-tube, and rolls every sound from its own <b>ranges</b>. Creatures take turns, answer and copy each other; slow eras drift density and register. The pond renders to a WAV, the same file every time for the same seed <span class="tag dec">Decided</span>.</p>
+        <p class="k"><b>Pages:</b> creature page (ranges, Morph, signature calls, solo render), pond page (six slots, Talks/Ignores, loudness range, key and harmonise, Overlap, Chaos, eras, preview and export), visualizer (a scope per creature: Ring, Shapes, Loop, Phase, Knot)</p>
+        <p class="k"><b>State:</b> plain JavaScript that runs in the browser and in Node, with vendored, hash-checked copies of the Throat, Dolphin and mouth-tube engines. Listening round next. Not a plugin yet <span class="tag open">Open</span></p>
+      </div>
+      <div class="card">
+        <div class="hd"><h4><span class="acc" style="background:var(--green)"></span>Syrinx</h4><span class="status"><span class="led mid"></span>Prototype · batch 03 of 11</span></div>
+        <p>A bird voice synth. Each voice is a syrinx of one, two or three sources, each a small nonlinear oscillator driven by air pressure and labial tension. Low notes start pulse-like, high notes near-pure; coupled sides lock, beat and throw off sidebands on their own.</p>
+        <p class="k"><b>Design:</b> Duplex (songbird), Single (dove, parrot) or Triple (ovenbird, with a tracheal membrane) · play modes Handoff, Interval, Duo, Independent · Coupling and Jumps through a shared trachea · superfast-muscle Wobble · syllable Patterns with a trill limit · Size from wren to crane · Musical lock to semitones · an internal Filter so it sounds like a bird alone. 44 parameters.</p>
+        <p class="k"><b>State:</b> source core works (one oscillator per voice, in tune to 0.04 cent), RK4 integration, Poly 4 voices. Sides, coupling and the bench next.</p>
+      </div>
+      <div class="card">
+        <div class="hd"><h4><span class="stripes h"><i style="background:var(--green)"></i><i style="background:var(--yellow)"></i></span>beak-tube</h4><span class="status"><span class="led off"></span>In design</span></div>
+        <p>An effect that shapes sound the way a bird's vocal tract does: a trachea, a throat cavity whose resonance <b>follows the pitch</b> it hears (how songbirds sing pure tones), and a beak or an inflated sac. Makes no sound of its own <span class="tag dec">Decided</span>; Syrinx's partner, as mouth-tube is Throat's.</p>
+        <p class="k"><b>Design:</b> modes Song, Parrot (tongue formants), Sac (dove coo), Boom (cassowary) · Trachea length and loss, Larynx, Track, Tune, Lag, Ring, Gape and Gape follow, Tongue, Sac tune, Inflate, Body · Size matched to Syrinx · stereo with a tracker per channel. 21 parameters, no LFOs.</p>
+        <p class="k"><b>State:</b> design, build plan and research notes in the repo; reference engine first.</p>
+      </div>
+    </div>
+    <p class="small soft">More ideas from the same research thread (tymbal, swim bladder, croak, stridulation, parasaurolophus, multiple mouths, geophony and others) are kept in <code>synth-ideas.md</code> and aren't on any roadmap yet.</p>
+
+    <h2>The Lab</h2>
+    <p class="soft">Concepts with names, art and parameter lists on the showcase page, none built yet. Each takes one stripe colour.</p>
+    <div class="scroll"><table class="tbl">
+      <tr><th>Working name</th><th>Idea</th><th>Inputs</th><th>Latency</th><th>Name candidates</th></tr>
+      <tr><td><span class="status" style="text-transform:none;font-size:12.5px"><span class="led" style="background:var(--green)"></span>Entrainer</span></td><td>Strongest partials of two sounds pull on each other's pitch like pendulum clocks syncing; drift into pure intervals and slip back out.</td><td>2</td><td>Analysis window</td><td>Partial Sync, Pitch Sync, Tuning Lock</td></tr>
+      <tr><td><span class="status" style="text-transform:none;font-size:12.5px"><span class="led" style="background:var(--orange)"></span>Miscorrect</span></td><td>Track sent over a simulated digital link with the sidechain as line noise; when the code breaks, the decoder "fixes" audio into wrong values.</td><td>2</td><td>Zero</td><td>Bit Error, Error Correct, Code Break</td></tr>
+      <tr><td><span class="status" style="text-transform:none;font-size:12.5px"><span class="led" style="background:var(--purple)"></span>Rank Swap</span></td><td>Loudest bin of the track moves to the loudest frequency of the sidechain, second to second, and so on.</td><td>2</td><td>One FFT window</td><td>Spectrum Swap, Peak Swap, Loudness Swap</td></tr>
+      <tr><td><span class="status" style="text-transform:none;font-size:12.5px"><span class="led" style="background:var(--yellow)"></span>Tri-Mode Vocoder</span></td><td>Modulator bands set the carrier's bit depth, resonance or update rate instead of volume.</td><td>2</td><td>~Zero</td><td>Bandwidth Vocoder, Three-Way Vocoder, Vocoder Crush</td></tr>
+      <tr><td><span class="status" style="text-transform:none;font-size:12.5px"><span class="led" style="background:var(--blue)"></span>Homebody LFO</span></td><td>Random LFO with a favourite value: lingers near home, rare trips out. Max for Live device.</td><td>—</td><td>None</td><td>Weighted LFO, Biased LFO, Gravity LFO</td></tr>
+      <tr><td><span class="status" style="text-transform:none;font-size:12.5px"><span class="led" style="background:var(--red)"></span>Dither Ghost</span></td><td>A loaded sample decides which way each value rounds, so its pitch and rhythm live inside the crush grain.</td><td>1 + sample</td><td>Zero</td><td>Dither Crush, Sample Dither, Sample Crush</td></tr>
+    </table></div>
+    <p class="small soft">My picks from the last naming round were Partial Sync, Bit Error, Spectrum Swap, Bandwidth Vocoder, Weighted LFO and Dither Crush <span class="tag sug">Proposed</span>; none are confirmed.</p>
+
+    <h2>The Voice pair</h2>
+    <p class="soft">A source–filter voice split across two products, each useful alone: Throat makes the sound, mouth-tube shapes it. Both are built and on the showcase page with download links.</p>
+    <div class="cards">
+      <div class="card">
+        <div class="hd"><h4><span class="stripes h"><i style="background:var(--red)"></i><i style="background:var(--blue)"></i></span>Throat</h4><span class="status"><span class="led on"></span>v0.1.0 built</span></div>
+        <p>A playable synth that models a larynx. <b>The only sound source</b> in the pair <span class="tag dec">Decided</span>, including voiceless breath and whisper.</p>
+        <p class="k"><b>Engine:</b> each fold cycle is an LF (Liljencrants–Fant) glottal pulse, with breath noise that pulses with every opening, per-cycle irregularity and subharmonics. Blends freely between modal, breathy, pressed, creaky, falsetto-like, growled and voiceless.</p>
+        <p class="k"><b>Controls:</b> Voicing, Breathy, Tense, Creaky, Thin, Growl · Jitter, Shimmer · Transpose, Detune, Glide, Mono/Poly (8 voices) · ADSR · Source (flow or derivative), Volume · user presets</p>
+        <p class="k"><b>Formats:</b> AU, VST3 instrument, Standalone · macOS universal · 32 samples latency · plugin code <code>Thrt</code></p>
+        <p class="k"><b>Later:</b> a two-mass physical mode as an experiment.</p>
+      </div>
+      <div class="card">
+        <div class="hd"><h4><span class="stripes h"><i style="background:var(--blue)"></i><i style="background:var(--purple)"></i><i style="background:var(--red)"></i></span>mouth-tube</h4><span class="status"><span class="led on"></span>v0.1.0 built</span></div>
+        <p>An audio effect that shapes sound the way a vocal tract does. <b>Makes no sound of its own</b> <span class="tag dec">Decided</span>; works on drums, synths and field recordings as well as Throat.</p>
+        <p class="k"><b>Engine:</b> a Kelly-Lochbaum waveguide of 40 sections from glottis to lips, plus a nasal branch at the velum. The controls describe a mouth and the tube shape follows; vowels, nasals and closures come from the shape alone, with no presets inside the engine. The tube runs at its own rate, so length scales formants smoothly. The planned formant-filter stage was skipped.</p>
+        <p class="k"><b>Controls:</b> tongue position pad (vowel chart), Tip, Jaw, Lips opening and Round, Nasal, Length 7–35 cm, Damping · Spread, Radiation, Mix, Output · user presets</p>
+        <p class="k"><b>Formats:</b> AU, VST3 effect, Standalone · macOS universal · dual-mono stereo · 28 samples latency at 48 kHz · plugin code <code>Mtub</code></p>
+        <p class="k"><b>Fricatives:</b> optionally take Throat's separate noise stream by sidechain and inject it at the constriction, for sharp s/sh/f <span class="tag open">Open</span></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 5 TECH -->
+<div class="sect" id="tech"><span class="num">05</span><h2>Technical architecture</h2><span class="rule"></span></div>
+<section class="window">
+  <div class="titlebar"><span class="closebox"></span><span class="lines"></span><span class="t">Architecture</span><span class="lines"></span></div>
+  <div class="wbody">
+    <p>Every plugin follows the Bandwidth Crusher layout. The DSP has no framework dependency, so it can be tested alone and moved to another framework if licensing ever demands it.</p>
+    <svg viewBox="0 0 900 250" width="100%" role="img" aria-label="Plugin architecture: Python or JavaScript reference tested against C++ DSP core, wrapped by JUCE processor and editor, which hosts the HTML UI over an event bridge" style="display:block;margin:6px 0 16px;font-family:var(--ui)">
+      <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#4a4a52"/></marker></defs>
+      <g font-size="13">
+        <rect x="10" y="20" width="200" height="64" rx="7" fill="#fff8e6" stroke="#d99a0b"/>
+        <text x="110" y="46" text-anchor="middle" font-weight="700">Reference (Python / JS)</text>
+        <text x="110" y="66" text-anchor="middle" font-size="11" fill="#4a4a52">defines the sound</text>
+        <rect x="10" y="150" width="200" height="64" rx="7" fill="#e8f6fc" stroke="#009ddc"/>
+        <text x="110" y="176" text-anchor="middle" font-weight="700">Browser test bench</text>
+        <text x="110" y="196" text-anchor="middle" font-size="11" fill="#4a4a52">same engine, render + listen</text>
+        <rect x="290" y="20" width="220" height="64" rx="7" fill="#e6f5df" stroke="#61bb46"/>
+        <text x="400" y="46" text-anchor="middle" font-weight="700">C++ DSP core (header-only)</text>
+        <text x="400" y="66" text-anchor="middle" font-size="11" fill="#4a4a52">real-time safe · 10 ms blocks</text>
+        <rect x="290" y="150" width="220" height="64" rx="7" fill="#ececef" stroke="#6e6e78"/>
+        <text x="400" y="176" text-anchor="middle" font-weight="700">JUCE 8 processor + editor</text>
+        <text x="400" y="196" text-anchor="middle" font-size="11" fill="#4a4a52">params · state · web view</text>
+        <rect x="600" y="150" width="200" height="64" rx="7" fill="#fdeced" stroke="#e03a3e"/>
+        <text x="700" y="176" text-anchor="middle" font-weight="700">ui/index.html</text>
+        <text x="700" y="196" text-anchor="middle" font-size="11" fill="#4a4a52">knobs + live view</text>
+        <rect x="600" y="20" width="200" height="64" rx="7" fill="#f3e8f3" stroke="#963d97"/>
+        <text x="700" y="46" text-anchor="middle" font-weight="700">GitHub Actions</text>
+        <text x="700" y="66" text-anchor="middle" font-size="11" fill="#4a4a52">tests · Mac build · release</text>
+      </g>
+      <g stroke="#4a4a52" stroke-width="1.6" fill="none">
+        <path d="M210 52H284" marker-end="url(#ar)"/>
+        <path d="M110 84V144" marker-end="url(#ar)"/>
+        <path d="M400 84V144" marker-end="url(#ar)"/>
+        <path d="M510 172H594" marker-end="url(#ar)"/>
+        <path d="M594 192H516" marker-end="url(#ar)"/>
+        <path d="M510 52H594" marker-end="url(#ar)"/>
+      </g>
+      <g font-size="10.5" fill="#4a4a52">
+        <text x="247" y="44" text-anchor="middle">compare tests</text>
+        <text x="118" y="118">port</text>
+        <text x="408" y="118">wraps</text>
+        <text x="552" y="164" text-anchor="middle">params, frames</text>
+        <text x="552" y="208" text-anchor="middle">setParam, gesture</text>
+        <text x="552" y="44" text-anchor="middle">every push</text>
+      </g>
+    </svg>
+    <div class="scroll"><table class="tbl">
+      <tr><th>Layer</th><th>Standard</th></tr>
+      <tr><td>DSP core</td><td>Single header, e.g. <code>source/CrusherDSP.h</code>. Everything allocated in <code>prepare()</code>; <code>process()</code> never allocates, locks or does I/O. Fixed 10 ms control blocks so the sound is buffer-size independent; latency reported to the host.</td></tr>
+      <tr><td>Reference + tests</td><td>The reference engine is the source of truth: Python in the Bandwidth repos (<code>reference/*.py</code>, <code>tests/compare.py</code>), JavaScript in Throat, mouth-tube, Dolphin and Syrinx (<code>reference/*.js</code>, <code>tests/compare.js</code>, run with Node). krill vendors those engines unmodified and checks their hashes. A C++ CLI build is compared against it (transparency, buffer-size independence, statistics). Throat and mouth-tube also have a <code>plugin_test</code> that checks the JUCE wrapper.</td></tr>
+      <tr><td>Wrapper</td><td>JUCE 8 via CMake. Formats AU, VST3, Standalone. Parameter ranges must match the UI's table exactly; the host talks in normalised 0–1 values.</td></tr>
+      <tr><td>UI bridge</td><td>Web view serves the HTML from binary data. C++ → JS: <code>param</code> events and ~30 fps view frames. JS → C++: <code>setParam</code>, <code>gesture</code> begin/end, <code>uiReady</code>. Outside the plugin the page runs a small simulation.</td></tr>
+      <tr><td>Identity</td><td>Company "Bytebent Audio", manufacturer code <code>Bytb</code>, bundle ID <code>com.bytebent.&lt;name&gt;</code>, a unique 4-letter plugin code (Crusher <code>Bwcr</code>, Brawl <code>Bwbr</code>, Throat <code>Thrt</code>, mouth-tube <code>Mtub</code>). Version comes from CMake and shows in the header as "v0.1.1 · Bytebent Audio".</td></tr>
+      <tr><td>Presets</td><td><code>source/PresetManager.h</code> (Throat, mouth-tube): user presets in <code>~/Music/Bytebent/&lt;Plugin&gt;/Presets</code>, browsed with ◀ name ▶ and Save; a <code>*</code> marks unsaved changes. No factory presets yet.</td></tr>
+      <tr><td>CI</td><td>Linux jobs run the DSP tests; macOS 14 job builds a universal binary, ad-hoc signs, runs <code>auval</code> and pluginval at strictness 7, zips with <code>Install.command</code> + <code>INSTALL.txt</code>, publishes as the <code>latest</code> release.</td></tr>
+      <tr><td>Install</td><td>Copies to the user plug-in folders and clears quarantine. Installs alongside, never over, the old fl-vibez copy, so existing Ableton sets keep working.</td></tr>
+      <tr><td>Git hygiene</td><td>Commits authored as <code>bytebent &lt;bytebent@users.noreply.github.com&gt;</code>. No personal names, emails, tokens or paths in history. Exception still to fix: Brawl's only commit is authored as "Claude".</td></tr>
+      <tr><td>Planning files</td><td>Newer repos (krill, Syrinx, beak-tube) start with <code>design.md</code> (every parameter, tagged Decided / Proposed / Open), <code>plan.md</code> (numbered batches, each ending in passing tests and a commit, with a "You" check before the next), <code>research.md</code> (papers and the numbers taken from them) and <code>tests.md</code> (results per batch, with pictures).</td></tr>
+      <tr><td>Performance</td><td>Engines ship a <code>tools/perf.js</code> that reports the share of one CPU core per scenario at 48 kHz, worst case included. Work that isn't audible is skipped (idle voices, inactive LFOs, silent creatures).</td></tr>
+      <tr><td>CI cost</td><td>Public repos on standard GitHub-hosted runners (including <code>macos-14</code>) use no Actions minutes, so Mac builds on every push are fine for public plugin repos. A private repo would use minutes, and macOS minutes cost the most.</td></tr>
+    </table></div>
+  </div>
+</section>
+
+<!-- 6 WORKFLOW -->
+<div class="sect" id="workflow"><span class="num">06</span><h2>How a plugin gets made</h2><span class="rule"></span></div>
+<section class="window">
+  <div class="titlebar"><span class="closebox"></span><span class="lines"></span><span class="t">Pipeline</span><span class="lines"></span></div>
+  <div class="wbody">
+    <div class="flow">
+      <div class="step"><span class="n">1</span><b>Concept</b>One-line idea, controls list, what the live view shows.</div>
+      <div class="step"><span class="n">2</span><b>UI mockup</b>Static HTML in the kit. Judge the look before any DSP.</div>
+      <div class="step"><span class="n">3</span><b>Reference + bench</b>Engine in Python or JavaScript, wrapped in a browser page: load audio or play live, listen, download.</div>
+      <div class="step"><span class="n">4</span><b>C++ + JUCE</b>Port, compare tests, wire the mockup to real parameters.</div>
+      <div class="step"><span class="n">5</span><b>CI + release</b>Mac build, validation, packaged download, real-DAW test.</div>
+    </div>
+    <p>Brawl showed why step 3 matters: testing revealed that measuring each side's claim as "distance from my input" turned a silent sidechain into a gate, so the rule was changed to "claim only where your own input has changed". Design changes are cheap in the reference and expensive in C++.</p>
+    <div class="callout"><b>Release checklist</b> <span class="tag sug">Proposed</span> Multiple DAWs, sample rates and buffer sizes; automation; save and reload projects; presets; a short before/after demo video; a manual; a support contact.</div>
+  </div>
+</section>
+
+<!-- 7 REPOS -->
+<div class="sect" id="repos"><span class="num">07</span><h2>Repositories</h2><span class="rule"></span></div>
+<section class="window">
+  <div class="titlebar"><span class="closebox"></span><span class="lines"></span><span class="t">github.com/bytebent</span><span class="lines"></span></div>
+  <div class="wbody">
+    <div class="scroll"><table class="tbl">
+      <tr><th>Repo</th><th>Visibility</th><th>Contents (19 Oct 2026)</th></tr>
+      <tr><td><a href="https://github.com/bytebent/bandwidth-crusher">bandwidth-crusher</a></td><td>Public</td><td>Full plugin v0.1.1: DSP, JUCE wrapper, web UI, Python reference, tests, offline browser tool, CI. One commit.</td></tr>
+      <tr><td><a href="https://github.com/bytebent/bandwidth-brawl">bandwidth-brawl</a></td><td>Public</td><td>Full plugin v0.1.0: DSP, JUCE wrapper with sidechain bus, web UI, Python reference, compare tests, browser bench, CI. One commit (authored as "Claude", see Open questions).</td></tr>
+      <tr><td><a href="https://github.com/bytebent/throat">throat</a></td><td>Public</td><td>Full instrument v0.1.0: JS reference and browser bench, C++ DSP, JUCE wrapper, web UI, presets, engine/compare/plugin tests, Mac release. Five commits; factory presets removed in the latest.</td></tr>
+      <tr><td><a href="https://github.com/bytebent/mouth-tube">mouth-tube</a></td><td>Public</td><td>Full effect v0.1.0: JS reference and browser bench, C++ DSP, JUCE wrapper, web UI, presets, engine/compare/plugin tests, CI. One commit.</td></tr>
+      <tr><td><a href="https://github.com/bytebent/dolphin">dolphin</a></td><td>Public</td><td>Prototype: JS reference engine, test presets, engine tests, perf benchmark, browser bench. Three commits.</td></tr>
+      <tr><td><a href="https://github.com/bytebent/krill">krill</a></td><td>Public</td><td>Prototype at batch 10 of 11: creature, pond and visualizer pages, Node renderer, vendored engines, 94 tests and headless browser checks, design, plan and test notes. 17 commits.</td></tr>
+      <tr><td><a href="https://github.com/bytebent/syrinx">syrinx</a></td><td>Public</td><td>Prototype at batch 03 of 11: JS reference engine, generated control-plane map, presets, engine tests, perf benchmark, design, plan, research and test notes. Four commits.</td></tr>
+      <tr><td><a href="https://github.com/bytebent/beak-tube">beak-tube</a></td><td>Public</td><td>Design, build plan and research notes. One commit.</td></tr>
+      <tr><td><a href="https://github.com/bytebent/showcase-design">showcase-design</a></td><td>Public</td><td>This document and the showcase page (<code>bytebent.html</code>).</td></tr>
+    </table></div>
+    <p class="small soft">Standard layout for new repos: <code>source/</code>, <code>ui/</code>, <code>reference/</code>, <code>tests/</code>, <code>tools/</code>, <code>packaging/</code>, <code>.github/workflows/</code>, <code>README.md</code> with a controls table and licence note. Repo names are lowercase with hyphens.</p>
+  </div>
+</section>
+
+<!-- 8 BUSINESS -->
+<div class="sect" id="business"><span class="num">08</span><h2>Business model</h2><span class="rule"></span></div>
+<section class="window">
+  <div class="titlebar"><span class="closebox"></span><span class="lines"></span><span class="t">Business.xls</span><span class="lines"></span></div>
+  <div class="wbody">
+    <div class="callout blue">Everything in this section is <span class="tag sug">Proposed</span> from our chats. None of it is committed, and the licence points should be checked against JUCE's full terms. I'm not a lawyer or financial adviser.</div>
+    <h3>Licensing</h3>
+    <ul>
+      <li>Crusher is currently open source under the AGPLv3 (required by JUCE's free licence when the code is public).</li>
+      <li>JUCE 8 tiers: <b>Starter</b> free up to $20k/year revenue with no splash screen; <b>Indie</b> $40/month or $800 perpetual up to $300k/year; <b>Pro</b> unlimited. Confirm Starter allows closed source before relying on it.</li>
+      <li>Staying on JUCE is the recommendation. If ever needed, iPlug2 is the nearest permissive alternative, and the framework-free DSP keeps that switch small.</li>
+    </ul>
+    <h3>Platforms and signing</h3>
+    <ul>
+      <li>Mac builds are ad-hoc signed only. Paid Mac plugins should be notarised (Apple Developer, ~$99/year). Until then: Mac as pay-what-you-want with a suggested price.</li>
+      <li>Windows builds don't exist yet and most buyers are on Windows. Needs a CI job and a Windows tester (Waveform Free handles sidechains).</li>
+    </ul>
+    <h3>Proposed prices (EUR, Windows; Mac pay-what-you-want)</h3>
+    <div class="scroll"><table class="tbl">
+      <tr><th>Product</th><th>Price</th><th>Why</th></tr>
+      <tr><td>Homebody LFO (M4L)</td><td>€7</td><td>Cheap first sale, no JUCE or signing issues</td></tr>
+      <tr><td>Bandwidth Crusher</td><td>€15</td><td>Single input, first release, impulse buy</td></tr>
+      <tr><td>Bandwidth Brawl</td><td>€25</td><td>Stronger hook, sidechain</td></tr>
+      <tr><td>Rank Swap</td><td>€25</td><td>Clear concept, great demo</td></tr>
+      <tr><td>Tri-Mode Vocoder</td><td>€35</td><td>Known category, three effects in one: likely main product</td></tr>
+      <tr><td>Entrainer</td><td>€49</td><td>Flagship, only once rock solid</td></tr>
+      <tr><td>Miscorrect</td><td>Free or €9</td><td>Mailing-list builder</td></tr>
+      <tr><td>Dither Ghost</td><td>Free</td><td>Subtle; or a mode in a later Crusher</td></tr>
+      <tr><td><b>Bandwidth bundle</b> (Crusher + Brawl + Vocoder)</td><td>~€59</td><td>vs. €75 separately</td></tr>
+    </table></div>
+    <p class="small soft">Pricing habits: 30–40% off at launch, start low, free updates for early buyers, demo versions of the pricier ones. Compare against similar plugins on Plugin Boutique and KVR before fixing prices. Distribution via Gumroad or itch.io. Mac tips count toward the JUCE Starter revenue limit.</p>
+  </div>
+</section>
+
+<!-- 9 ROADMAP -->
+<div class="sect" id="roadmap"><span class="num">09</span><h2>Roadmap</h2><span class="rule"></span></div>
+<section class="window">
+  <div class="titlebar"><span class="closebox"></span><span class="lines"></span><span class="t">Roadmap</span><span class="lines"></span></div>
+  <div class="wbody">
+    <div class="scroll"><table class="tbl">
+      <tr><th>Phase</th><th>Work</th><th>State</th></tr>
+      <tr><td><b>0 · Foundation</b></td><td>Name, rebrand from fl-vibez, Y2K kit, Crusher v0.1.1 with CI and installer, showcase page.</td><td><span class="status"><span class="led on"></span>Done</span></td></tr>
+      <tr><td><b>1 · Claim the brand</b></td><td>Showcase page rebranded to bytebent with Brawl, the Voice pair and the Creatures added (done 19 Oct). Still to do: domain, social handles, trademark search, final Lab names.</td><td><span class="status"><span class="led mid"></span>Next</span></td></tr>
+      <tr><td><b>2 · Brawl</b></td><td>Engine and bench in the repo, JUCE port with sidechain bus, territory view, CI. Still to do: fix the commit author, test in a DAW.</td><td><span class="status"><span class="led on"></span>Built</span></td></tr>
+      <tr><td><b>3 · Ready to sell</b></td><td>Windows build, JUCE licence decision, presets, demo videos, store page, mailing list. Release Crusher free/PWYW to build an audience, then sell Brawl.</td><td><span class="status"><span class="led off"></span>Planned</span></td></tr>
+      <tr><td><b>4 · Lab</b></td><td><span class="tag sug">Proposed</span> Tri-Mode Vocoder next: likely main paid product, completes the Bandwidth bundle, and reuses Crusher's quantiser and the loop-buffer budget logic. Build order clarity → resonance → bandwidth. Then Homebody LFO, Rank Swap, and Miscorrect and Dither Ghost as freebies.</td><td><span class="status"><span class="led mid"></span>Next</span></td></tr>
+      <tr><td><b>5 · Voice pair</b></td><td>Throat and mouth-tube v0.1.0 built (tube model went first; the formant stage was skipped). On the showcase page. Still to do: DAW testing, factory presets, optional fricative sidechain, physical Throat mode as an experiment.</td><td><span class="status"><span class="led on"></span>Built</span></td></tr>
+      <tr><td><b>6 · Creatures</b></td><td>Dolphin: C++ port and JUCE instrument. Syrinx: batches 04–11 (sides, coupling, patterns, bench, port, plugin). beak-tube: reference engine and bench, then the plugin. krill: listening round (batch 09–11), then decide whether it becomes a plugin.</td><td><span class="status"><span class="led mid"></span>In progress</span></td></tr>
+      <tr><td><b>7 · Long term</b></td><td>Entrainer as flagship, once everything else is solid.</td><td><span class="status"><span class="led off"></span>Later</span></td></tr>
+    </table></div>
+  </div>
+</section>
+
+<!-- 10 OPEN -->
+<div class="sect" id="open"><span class="num">10</span><h2>Open questions</h2><span class="rule"></span></div>
+<section class="window">
+  <div class="titlebar"><span class="closebox"></span><span class="lines"></span><span class="t">ToDo.txt</span><span class="lines"></span></div>
+  <div class="wbody">
+    <ol>
+      <li><b>Crusher or Crush?</b> Renaming means changing the repo, build and plugin identity, and installing alongside again.</li>
+      <li><b>Lab names.</b> Pick one per product from the "says what it does" shortlist above.</li>
+      <li><b>Open source or closed?</b> Keep AGPL, or go closed under JUCE Starter/Indie.</li>
+      <li><b>Downloads.</b> Keep a single replaced <code>latest</code> build, or keep every version downloadable once there are other users.</li>
+      <li><b>Windows.</b> When to add the build, and who tests it.</li>
+      <li><b>Voice pair.</b> Product status (part of the Lab or its own series), whether mouth-tube takes Throat's noise stream for fricatives, and whether "mouth-tube" is the final name (a formant "mouth" could still follow).</li>
+      <li><b>Brawl commit author.</b> Its one commit is authored as "Claude &lt;noreply@anthropic.com&gt;"; amend to <code>bytebent</code> and force-push.</li>
+      <li><b>Real-DAW testing.</b> The <code>latest</code> builds of Brawl, Throat and mouth-tube passed CI (auval, pluginval); they still need checking in Ableton and other hosts.</li>
+      <li><b>Creatures.</b> Is "the Creatures" the family name; Syrinx and beak-tube accent colours; plugin codes for Dolphin, Syrinx and beak-tube; does krill become a plugin or stay a browser tool.</li>
+      <li><b>Where the Max for Live LFO sits</b> in a brand that's otherwise AU/VST3.</li>
+      <li><b>Brand checks.</b> Domain, handles and trademark availability for "bytebent".</li>
+    </ol>
+    <h3>Sources</h3>
+    <ul class="small">
+      <li>Our chats: Bandwidth-limited audio visualization; Shared bandwidth audio inputs; Y2K plugin showcase site; VST resale licensing terms; Vibecoding wishlist songs; dolphin synth; Krill ambient plugin design; Krill visualizer development; Bird syrinx synth design; Sound synthesis instrument designs.</li>
+      <li>Files: bytebent.html (showcase page), bandwidth-brawl-mockup.html, index.html (Crusher UI), synth-ideas.md.</li>
+      <li>Repos, checked 19 Oct 2026: <a href="https://github.com/bytebent/bandwidth-crusher">bandwidth-crusher</a>, <a href="https://github.com/bytebent/bandwidth-brawl">bandwidth-brawl</a>, <a href="https://github.com/bytebent/throat">throat</a>, <a href="https://github.com/bytebent/mouth-tube">mouth-tube</a>, <a href="https://github.com/bytebent/dolphin">dolphin</a>, <a href="https://github.com/bytebent/krill">krill</a>, <a href="https://github.com/bytebent/syrinx">syrinx</a>, <a href="https://github.com/bytebent/beak-tube">beak-tube</a> (READMEs, design and plan files, CMakeLists.txt, engines, commit history).</li>
+      <li><a href="https://docs.github.com/en/billing/concepts/product-billing/github-actions">How use of GitHub Actions is measured</a> (docs.github.com)</li>
+      <li><a href="https://forum.juce.com/t/amendments-to-the-juce-end-user-licence-agreement-for-juce-8/61265">JUCE 8 licence amendments</a> (forum.juce.com)</li>
+    </ul>
+  </div>
+</section>
+
+<div style="text-align:center;margin-top:26px">
+  <span class="badge88" style="background:linear-gradient(90deg,var(--green),var(--yellow),var(--orange),var(--red),var(--purple),var(--blue));color:#fff;text-shadow:0 1px 1px #000">MADE ON<br>A MAC</span>
+  <span class="badge88" style="background:var(--platinum);color:#000">BEST HEARD<br>ON HEADPHONES</span>
+  <span class="badge88" style="background:var(--blue);color:#fff">SIDECHAIN<br>POWERED</span>
+</div>
+<p class="footer">You are reader <span class="counter">000003</span> · © 2026 bytebent · updated 19 Oct 2026 · best viewed at 800×600</p>
+</div>
+
+<script>
+(function(){
+  var c = document.getElementById('hero'); if(!c) return;
+  var x = c.getContext('2d'), W = c.width, H = c.height, N = 200, bw = W/N, mid = H/2;
+  var C = [[97,187,70],[253,184,39],[245,130,31],[224,58,62],[150,61,151],[0,157,220]], grey = [85,85,92];
+  function R(s){ return function(){ s = (s*16807)%2147483647; return s/2147483647; }; }
+  function mix(a,b,t){ return a.map(function(v,i){ return Math.round(v+(b[i]-v)*t); }); }
+  var p = 0.3, stat = document.getElementById('heroStat');
+  function draw(){
+    var r = R(11); x.clearRect(0,0,W,H);
+    for (var i=0;i<N;i++){
+      var age = Math.min(1, (((p - i/N) + 1) % 1)*1.15 + r()*0.12);
+      var amp = (0.25 + 0.55*Math.abs(Math.sin(i*0.11))*(0.6+r()*0.4)) * (i%23<2 ? 1.3 : 1);
+      var col = mix(C[Math.floor(i/N*6)%6], grey, Math.pow(age,0.8)*0.9);
+      x.fillStyle = 'rgb('+col.join(',')+')'; var h = Math.min(.95,amp)*H*0.46;
+      x.fillRect(Math.floor(i*bw), mid-h, Math.ceil(bw)-1, h*2);
+    }
+    var px = Math.floor(W*p); x.fillStyle='#fff'; x.shadowColor='#fff'; x.shadowBlur=8; x.fillRect(px,0,3,H); x.shadowBlur=0;
+    p = (p + 0.004) % 1;
+    if (stat) stat.textContent = 'FRESH ' + (55 + Math.round(10*Math.sin(p*12))) + '%';
+  }
+  var still = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  draw(); setInterval(draw, still ? 400 : 50);
+})();
+</script>
+</body>
+</html>

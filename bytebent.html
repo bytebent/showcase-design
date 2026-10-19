@@ -1,0 +1,791 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>bytebent</title>
+<style>
+:root{
+  --platinum:#dcdce0; --platinum-hi:#ececef; --platinum-lo:#c4c4ca; --etch:#9c9ca4;
+  --ink:#000; --ink-soft:#4a4a52; --inset:#f4f4f6; --desk:#b9b9c0;
+  --green:#61bb46; --yellow:#fdb827; --orange:#f5821f; --red:#e03a3e; --purple:#963d97; --blue:#009ddc;
+  --blue-dk:#00699a; --red-dk:#9e1f23; --green-dk:#3a7a28; --graphite:#6e6e78;
+  --ui:"Lucida Grande","Lucida Sans Unicode",Geneva,Verdana,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  background:
+    radial-gradient(circle at 1px 1px, rgba(0,0,0,.09) 1px, transparent 1.5px) 0 0/6px 6px,
+    var(--desk);
+  font:13px/1.45 var(--ui); color:var(--ink);
+  padding:0 16px 40px;
+}
+a{color:var(--blue-dk)}
+
+/* menu bar */
+.menubar{position:sticky;top:0;z-index:5;margin:0 -16px 28px;display:flex;align-items:center;gap:18px;
+  padding:5px 16px;background:linear-gradient(#fbfbfc,#dedee2);border-bottom:1px solid #8e8e96;
+  box-shadow:0 1px 3px rgba(0,0,0,.15);font-size:12px;white-space:nowrap;overflow-x:auto}
+.menubar b{font-size:13px}
+.menubar a{color:var(--ink);text-decoration:none}
+.menubar a:hover{background:var(--blue);color:#fff;border-radius:3px;padding:0 4px;margin:0 -4px}
+.menubar .clock{margin-left:auto;color:var(--ink-soft)}
+
+.wrap{max-width:1040px;margin:0 auto}
+
+/* windows */
+.window{
+  background:
+    repeating-linear-gradient(0deg, rgba(255,255,255,.55) 0 1px, rgba(255,255,255,0) 1px 2px, rgba(0,0,0,.035) 2px 3px, rgba(0,0,0,0) 3px 4px),
+    var(--platinum);
+  border:1px solid #7d7d86; border-radius:9px;
+  box-shadow:0 1px 0 #fff inset, 0 12px 32px rgba(0,0,0,.25);
+  overflow:hidden; display:flex; flex-direction:column;
+}
+.titlebar{display:flex;align-items:center;gap:10px;padding:7px 12px 6px;
+  background:linear-gradient(#f6f6f8,#d6d6db);border-bottom:1px solid #8e8e96}
+.closebox{width:12px;height:12px;border:1px solid #6e6e78;border-radius:2px;background:linear-gradient(#fff,#cfcfd5);flex:none}
+.titlebar .lines{flex:1;height:9px;background:repeating-linear-gradient(0deg,#9c9ca4 0 1px,transparent 1px 3px);opacity:.6}
+.titlebar .t{font-weight:700;font-size:12px}
+.stripes{display:flex;flex-direction:column;width:20px;height:16px;border-radius:3px;overflow:hidden;box-shadow:0 0 0 1px rgba(0,0,0,.35);flex:none}
+.stripes.h{flex-direction:row}
+.stripes i{flex:1}
+.wbody{padding:16px}
+
+/* hero */
+.hero .wbody{display:grid;grid-template-columns:1.2fr 1fr;gap:22px;align-items:center;padding:26px}
+.hero h1{margin:0 0 4px;font-size:40px;line-height:1;letter-spacing:-1.5px}
+.hero h1 span{background:linear-gradient(180deg,var(--green) 0 17%,var(--yellow) 17% 34%,var(--orange) 34% 51%,var(--red) 51% 68%,var(--purple) 68% 85%,var(--blue) 85%);
+  -webkit-background-clip:text;background-clip:text;color:transparent}
+.hero .lede{font-size:15px;color:var(--ink-soft);margin:10px 0 18px;max-width:48ch}
+.hero .lcd{background:#0b0b0e;border-radius:6px;padding:12px;box-shadow:0 0 0 1px #000,0 2px 6px rgba(0,0,0,.5) inset}
+.hero .lcd canvas{width:100%;height:150px;display:block}
+.hero .lcd .cap{display:flex;justify-content:space-between;font:11px/1 Monaco,"Courier New",monospace;color:#8f8;margin-top:8px}
+
+/* gel buttons */
+.gel{display:inline-flex;align-items:center;gap:8px;padding:7px 18px;border-radius:999px;font:700 12px var(--ui);
+  color:#fff;text-decoration:none;border:1px solid var(--blue-dk);position:relative;cursor:pointer;
+  background:linear-gradient(#8fd8f7,var(--blue) 48%,#0086c0 52%,#38b8ea);
+  box-shadow:0 2px 4px rgba(0,0,0,.3), 0 1px 0 rgba(255,255,255,.5) inset;text-shadow:0 -1px 0 rgba(0,0,0,.3)}
+.gel::before{content:"";position:absolute;left:10px;right:10px;top:2px;height:45%;border-radius:999px;background:linear-gradient(rgba(255,255,255,.75),rgba(255,255,255,.1))}
+.gel.grey{color:#222;border-color:#7d7d86;text-shadow:0 1px 0 #fff;background:linear-gradient(#fff,#d8d8dd 48%,#c4c4ca 52%,#e6e6ea)}
+.gel.red{border-color:var(--red-dk);background:linear-gradient(#f7a4a6,var(--red) 48%,#c42a2e 52%,#ee6a6d)}
+.gel:hover{filter:brightness(1.07)}
+.btnrow{display:flex;gap:10px;flex-wrap:wrap}
+
+/* section heads */
+.sect{display:flex;align-items:center;gap:12px;margin:40px 0 14px}
+.sect h2{margin:0;font-size:13px;text-transform:uppercase;letter-spacing:1.5px;white-space:nowrap}
+.sect .rule{flex:1;height:2px;border-radius:2px;background:linear-gradient(90deg,var(--green),var(--yellow),var(--orange),var(--red),var(--purple),var(--blue));opacity:.8}
+.sect .sub{color:var(--ink-soft);font-size:12px;white-space:nowrap}
+
+/* product cards */
+.featured{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.featured + .featured{margin-top:20px}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.card .wbody{display:flex;flex-direction:column;gap:12px;flex:1}
+.screen{background:#0b0b0e;border-radius:5px;box-shadow:0 0 0 1px #000,0 2px 4px rgba(0,0,0,.5) inset;padding:6px}
+.screen canvas{display:block;width:100%;height:96px}
+.featured .screen canvas{height:130px}
+.card h3{margin:0;font-size:18px;letter-spacing:-.4px}
+.card .tag{margin:2px 0 0;color:var(--ink-soft);font-size:12px;font-style:italic}
+.card p{margin:0}
+.card ul{margin:0;padding-left:18px}
+.card li{margin:2px 0}
+.chips{display:flex;flex-wrap:wrap;gap:5px}
+.chip{font-size:10.5px;padding:1px 8px;border-radius:9px;background:var(--inset);border:1px solid #b4b4bb;box-shadow:0 1px 1px rgba(0,0,0,.1) inset}
+.status{display:inline-flex;align-items:center;gap:6px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+.led{width:9px;height:9px;border-radius:50%;box-shadow:0 0 0 1px rgba(0,0,0,.45) inset}
+.led.on{background:radial-gradient(circle at 35% 30%,#d6ffc8,var(--green) 60%,#3a7a28);box-shadow:0 0 6px var(--green),0 0 0 1px rgba(0,0,0,.45) inset}
+.led.mid{background:radial-gradient(circle at 35% 30%,#fff1c4,var(--yellow) 60%,#a77408)}
+.led.off{background:radial-gradient(circle at 35% 30%,#eee,#9c9ca4 60%,#6e6e78)}
+.specs{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;font-size:11px;color:var(--ink-soft);
+  background:var(--platinum-hi);border:1px solid var(--etch);border-radius:5px;padding:7px 9px}
+.specs b{color:var(--ink);font-weight:700}
+.foot{margin-top:auto;display:flex;align-items:center;justify-content:space-between;gap:10px;padding-top:4px}
+.avail{font-weight:700;font-size:13px}
+.avail small{display:block;font-weight:400;font-size:10.5px;color:var(--ink-soft)}
+
+/* about + badges */
+.about .wbody{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+.about h3{margin:0 0 6px;font-size:13px}
+.about p{margin:0 0 10px;color:var(--ink-soft)}
+.badges{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:30px}
+.badge88{width:88px;height:31px;border:1px solid #333;display:flex;align-items:center;justify-content:center;text-align:center;
+  font:700 9px/1.05 Verdana,sans-serif;letter-spacing:.3px;box-shadow:1px 1px 0 #fff inset,-1px -1px 0 rgba(0,0,0,.3) inset}
+.counter{font:12px Monaco,"Courier New",monospace;background:#000;color:#3f3;padding:2px 6px;border-radius:2px;letter-spacing:2px}
+.small{text-align:center;color:var(--ink-soft);font-size:11px;margin-top:12px}
+
+@media (max-width:860px){
+  .hero .wbody,.featured,.about .wbody{grid-template-columns:1fr}
+  .grid{grid-template-columns:1fr 1fr}
+}
+@media (max-width:560px){
+  .grid{grid-template-columns:1fr}
+  .hero h1{font-size:32px}
+  .hero .wbody{padding:18px}
+  .sect .sub{display:none}
+}
+</style>
+</head>
+<body>
+
+<nav class="menubar">
+  <span class="stripes" aria-hidden="true"><i style="background:var(--green)"></i><i style="background:var(--yellow)"></i><i style="background:var(--orange)"></i><i style="background:var(--red)"></i><i style="background:var(--purple)"></i><i style="background:var(--blue)"></i></span>
+  <b>bytebent</b>
+  <a href="#bandwidth">Bandwidth</a>
+  <a href="#voice">Voice</a>
+  <a href="#creatures">Creatures</a>
+  <a href="#lab">The Lab</a>
+  <a href="#about">About</a>
+  <span class="clock" id="clock">12:00 AM</span>
+</nav>
+
+<div class="wrap">
+
+  <!-- HERO -->
+  <section class="window hero">
+    <div class="titlebar"><span class="closebox"></span><span class="lines"></span><span class="t">Welcome.html</span><span class="lines"></span></div>
+    <div class="wbody">
+      <div>
+        <h1><span>bytebent</span><br>audio plugins</h1>
+        <p class="lede">Effects and instruments that treat sound like data or like a body: byte budgets and error codes, a larynx and a mouth, a dolphin's phonic lips, a bird's syrinx. Strange on purpose, built to be played.</p>
+        <div class="btnrow">
+          <a class="gel" href="#bandwidth">Browse plugins</a>
+          <a class="gel grey" href="#about">What is this?</a>
+        </div>
+      </div>
+      <div class="lcd">
+        <canvas id="hero" width="900" height="300"></canvas>
+        <div class="cap"><span>BUDGET 24 kB/s</span><span id="heroStat">FRESH 61%</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- BANDWIDTH -->
+  <div class="sect" id="bandwidth"><h2>The Bandwidth Series</h2><span class="rule"></span></div>
+  <div class="featured">
+
+    <article class="window card">
+      <div class="titlebar"><span class="closebox"></span><span class="stripes"><i style="background:var(--green)"></i><i style="background:var(--yellow)"></i><i style="background:var(--orange)"></i><i style="background:var(--red)"></i><i style="background:var(--purple)"></i><i style="background:var(--blue)"></i></span><span class="t">Bandwidth Crusher</span><span class="lines"></span></div>
+      <div class="wbody">
+        <div class="screen"><canvas id="c-crusher" width="900" height="260"></canvas></div>
+        <div>
+          <span class="status"><span class="led on"></span>Out now · v0.1.1</span>
+          <h3>Bandwidth Crusher</h3>
+          <p class="tag">Your audio, but only N kB can change per second.</p>
+        </div>
+        <p>A short loop plays on repeat while the input tries to rewrite it, under a strict byte budget. Whatever doesn't get updated keeps playing old audio: smears, ghosts, stutters and fizz.</p>
+        <ul>
+          <li>Budget from 0.5 to 1000 kB/s, the one knob that matters</li>
+          <li>Greedy or random updates: clean repair vs. fizzy chaos</li>
+          <li>Loops from 1 ms buzz to 4 s washes, tempo-synced if you like</li>
+          <li>Live loop view shows fresh and stale audio as it plays</li>
+        </ul>
+        <div class="chips"><span class="chip">Budget</span><span class="chip">Bit depth</span><span class="chip">Greedy ↔ Random</span><span class="chip">Loop length</span><span class="chip">Memory</span><span class="chip">Chunk size</span><span class="chip">Edge smoothing</span></div>
+        <div class="specs"><b>Type</b><span>Effect</span><b>Formats</b><span>AU · VST3 · Standalone, macOS (Apple Silicon + Intel)</span><b>Latency</b><span>10 ms, reported to your DAW</span><b>Inputs</b><span>1 (stereo)</span></div>
+        <div class="foot"><span class="avail">macOS<small>tested in Ableton Live</small></span><a class="gel" href="https://github.com/bytebent/bandwidth-crusher/releases/tag/latest">Download</a></div>
+      </div>
+    </article>
+
+    <article class="window card">
+      <div class="titlebar"><span class="closebox"></span><span class="stripes h"><i style="background:var(--blue)"></i><i style="background:var(--red)"></i></span><span class="t">Bandwidth Brawl</span><span class="lines"></span></div>
+      <div class="wbody">
+        <div class="screen"><canvas id="c-brawl" width="900" height="260"></canvas></div>
+        <div>
+          <span class="status"><span class="led on"></span>New · v0.1.0</span>
+          <h3>Bandwidth Brawl</h3>
+          <p class="tag">Two tracks. One loop. One budget. Let them fight.</p>
+        </div>
+        <p>Your track and a sidechain share a single loop and a single byte budget. Each side only claims budget where its own input has changed; the loser freezes on stale audio until it changes enough to win back its ground.</p>
+        <ul>
+          <li>The two parts take turns, and the rhythm comes from the music</li>
+          <li>Put it on a pad with drums as the rival: ducking that stalls instead of dips</li>
+          <li>Territory view shows who owns which part of the loop</li>
+          <li>Bias, Sharpness and Hold shape the fight from gentle to brutal</li>
+        </ul>
+        <div class="chips"><span class="chip">Budget</span><span class="chip">Bias A ↔ B</span><span class="chip">Sharpness</span><span class="chip">Hold</span><span class="chip">Savings</span><span class="chip">B Trim</span></div>
+        <div class="specs"><b>Type</b><span>Effect with sidechain</span><b>Formats</b><span>AU · VST3 · Standalone, macOS (Apple Silicon + Intel)</span><b>Latency</b><span>10 ms, reported to your DAW</span><b>Inputs</b><span>2: track + sidechain</span></div>
+        <div class="foot"><span class="avail">macOS<small>early version</small></span><a class="gel red" href="https://github.com/bytebent/bandwidth-brawl/releases/tag/latest">Download</a></div>
+      </div>
+    </article>
+  </div>
+
+  <!-- VOICE -->
+  <div class="sect" id="voice"><h2>The Voice Pair</h2><span class="rule"></span><span class="sub">one voice, two plugins</span></div>
+  <div class="featured">
+
+    <article class="window card">
+      <div class="titlebar"><span class="closebox"></span><span class="stripes h"><i style="background:var(--red)"></i><i style="background:var(--blue)"></i></span><span class="t">Throat</span><span class="lines"></span></div>
+      <div class="wbody">
+        <div class="screen"><canvas id="c-throat" width="900" height="260"></canvas></div>
+        <div>
+          <span class="status"><span class="led on"></span>New · v0.1.0</span>
+          <h3>Throat</h3>
+          <p class="tag">A larynx you can play.</p>
+        </div>
+        <p>A synth that models vocal folds. Every cycle is a real glottal pulse, with breath that puffs on each opening, uneven timing and subharmonics. Blend from breathy to pressed, croaky fry to thin falsetto, growl or pure whisper.</p>
+        <ul>
+          <li>Six phonation knobs that mix freely: Voicing, Breathy, Tense, Creaky, Thin, Growl</li>
+          <li>Jitter and shimmer for the small unsteadiness of a real voice</li>
+          <li>Mono with glide, or 8-voice poly for choirs of throats</li>
+          <li>Save your own presets; made to feed mouth-tube, but raw it's a strange, buzzy lead</li>
+        </ul>
+        <div class="chips"><span class="chip">Voicing</span><span class="chip">Breathy</span><span class="chip">Tense</span><span class="chip">Creaky</span><span class="chip">Thin</span><span class="chip">Growl</span><span class="chip">Jitter</span><span class="chip">Shimmer</span><span class="chip">Glide</span></div>
+        <div class="specs"><b>Type</b><span>Instrument (MIDI in)</span><b>Formats</b><span>AU · VST3 · Standalone, macOS (Apple Silicon + Intel)</span><b>Latency</b><span>32 samples, reported to your DAW</span></div>
+        <div class="foot"><span class="avail">macOS<small>early version</small></span><a class="gel red" href="https://github.com/bytebent/throat/releases/tag/latest">Download</a></div>
+      </div>
+    </article>
+
+    <article class="window card">
+      <div class="titlebar"><span class="closebox"></span><span class="stripes h"><i style="background:var(--blue)"></i><i style="background:var(--purple)"></i><i style="background:var(--red)"></i></span><span class="t">mouth-tube</span><span class="lines"></span></div>
+      <div class="wbody">
+        <div class="screen"><canvas id="c-tube" width="900" height="260"></canvas></div>
+        <div>
+          <span class="status"><span class="led on"></span>New · v0.1.0</span>
+          <h3>mouth-tube</h3>
+          <p class="tag">Any sound, through a mouth.</p>
+        </div>
+        <p>An effect that sends your audio down a 40-section tube from throat to lips, with a nose that opens at the back. Move the tongue, jaw and lips and the vowels come out of the shape itself. It makes no sound of its own.</p>
+        <ul>
+          <li>Drag the tongue around a vowel chart; tip, jaw and lips do the rest</li>
+          <li>Open the velum for nasals; close the lips and it hums through the nose</li>
+          <li>Tract length from 7 to 35 cm: a tiny mouth or a giant one</li>
+          <li>Put it on Throat to make it talk, or on drums, synths and field recordings</li>
+        </ul>
+        <div class="chips"><span class="chip">Tongue pad</span><span class="chip">Tip</span><span class="chip">Jaw</span><span class="chip">Lips</span><span class="chip">Round</span><span class="chip">Nasal</span><span class="chip">Length</span><span class="chip">Damping</span><span class="chip">Spread</span></div>
+        <div class="specs"><b>Type</b><span>Effect, mono or stereo</span><b>Formats</b><span>AU · VST3 · Standalone, macOS (Apple Silicon + Intel)</span><b>Latency</b><span>28 samples at 48 kHz, reported to your DAW</span></div>
+        <div class="foot"><span class="avail">macOS<small>early version</small></span><a class="gel" href="https://github.com/bytebent/mouth-tube/releases/tag/latest">Download</a></div>
+      </div>
+    </article>
+  </div>
+
+  <!-- CREATURES -->
+  <div class="sect" id="creatures"><h2>The Creatures</h2><span class="rule"></span><span class="sub">animal voices and alien ponds · in the works</span></div>
+  <div class="featured">
+
+    <article class="window card">
+      <div class="titlebar"><span class="closebox"></span><span class="stripes" style="background:var(--blue)"></span><span class="t">Dolphin</span><span class="lines"></span></div>
+      <div class="wbody">
+        <div class="screen"><canvas id="c-dolphin" width="900" height="260"></canvas></div>
+        <div>
+          <span class="status"><span class="led mid"></span>Prototype · browser bench</span>
+          <h3>Dolphin</h3>
+          <p class="tag">Clicks, codas and whistles from two phonic lips.</p>
+        </div>
+        <p>A cetacean voice synth. Each voice has two sources, as toothed whales do: a pulse source whose rate runs from rhythm (codas, click trains) up into pitch (creaks, squawks, burst pulses), and a whistle of a few pure partials. Biphonation couples them, so whistles carry sidebands like orca calls.</p>
+        <ul>
+          <li>One Rate control carries clicks into buzz, burst pulse and tone</li>
+          <li>Coda patterns with jitter and rubato, free or synced to tempo</li>
+          <li>Drawn whistle shapes and sweeps for each note</li>
+          <li>Size scales the animal, and everything stays inside human hearing</li>
+        </ul>
+        <div class="chips"><span class="chip">Rate</span><span class="chip">Pattern</span><span class="chip">Coda</span><span class="chip">Click tone</span><span class="chip">Ring</span><span class="chip">Vowel</span><span class="chip">Whistle shape</span><span class="chip">Sweep</span><span class="chip">Register</span><span class="chip">Biphon</span><span class="chip">Size</span></div>
+        <div class="specs"><b>Type</b><span>Instrument (MIDI in)</span><b>Now</b><span>Reference engine and a playable browser bench with four LFOs</span><b>Next</b><span>C++ port and AU / VST3 plugin</span></div>
+        <div class="foot"><span class="avail">In development<small>plugin not built yet</small></span><a class="gel grey" href="https://github.com/bytebent/dolphin">Source</a></div>
+      </div>
+    </article>
+
+    <article class="window card">
+      <div class="titlebar"><span class="closebox"></span><span class="stripes h"><i style="background:var(--green)"></i><i style="background:var(--yellow)"></i><i style="background:var(--orange)"></i><i style="background:var(--red)"></i><i style="background:var(--purple)"></i><i style="background:var(--blue)"></i></span><span class="t">krill</span><span class="lines"></span></div>
+      <div class="wbody">
+        <div class="screen"><canvas id="c-krill" width="900" height="260"></canvas></div>
+        <div>
+          <span class="status"><span class="led mid"></span>Prototype · listening round</span>
+          <h3>krill</h3>
+          <p class="tag">A pond of alien creatures that talk to each other.</p>
+        </div>
+        <p>A generator for long ambient pieces. Each creature is built from bytebent engines (Throat, Dolphin and mouth-tube), rolls every sound from its own ranges, and takes turns, answers and copies the others. The pond renders to a WAV file of any length.</p>
+        <ul>
+          <li>Design creatures by ranges: narrow is predictable, wide is strange</li>
+          <li>Up to six creatures per pond, each in its own lane and colour</li>
+          <li>Same pond and seed give the same piece, bit for bit</li>
+          <li>A visualizer draws each creature as a scope of its own voice</li>
+        </ul>
+        <div class="chips"><span class="chip">Ranges</span><span class="chip">Morph</span><span class="chip">Signature</span><span class="chip">Talks / Ignores</span><span class="chip">Overlap</span><span class="chip">Chaos</span><span class="chip">Era</span><span class="chip">Key</span><span class="chip">Seed</span></div>
+        <div class="specs"><b>Type</b><span>Generator: browser pages plus a Node renderer</span><b>Output</b><span>Stereo WAV, any length</span><b>Engines</b><span>Throat, Dolphin, mouth-tube</span></div>
+        <div class="foot"><span class="avail">In development<small>runs in the browser</small></span><a class="gel grey" href="https://github.com/bytebent/krill">Source</a></div>
+      </div>
+    </article>
+  </div>
+
+  <div class="featured">
+    <article class="window card">
+      <div class="titlebar"><span class="closebox"></span><span class="stripes" style="background:var(--green)"></span><span class="t">Syrinx</span><span class="lines"></span></div>
+      <div class="wbody">
+        <div class="screen"><canvas id="c-syrinx" width="900" height="260"></canvas></div>
+        <div>
+          <span class="status"><span class="led mid"></span>Prototype · engine in progress</span>
+          <h3>Syrinx</h3>
+          <p class="tag">A bird's voice box, both sides at once.</p>
+        </div>
+        <p>A bird voice synth. Each voice is a syrinx with one, two or three sources, each a small oscillator driven by air pressure and tension, the way birds make sound. Low notes start rich and pulse-like, high notes start almost pure, and coupled sources lock, beat and pulse on their own.</p>
+        <ul>
+          <li>Duplex, Single or Triple sources: songbird, dove or ovenbird</li>
+          <li>Handoff sends low notes to the left side and high ones to the right, mid-sweep</li>
+          <li>Patterns turn a held key into syllables and trills</li>
+          <li>Size goes from wren to crane; Musical lock snaps it to semitones</li>
+        </ul>
+        <div class="chips"><span class="chip">Topology</span><span class="chip">Regime</span><span class="chip">Play mode</span><span class="chip">Split</span><span class="chip">Asymmetry</span><span class="chip">Coupling</span><span class="chip">Jumps</span><span class="chip">Wobble</span><span class="chip">Pressure</span><span class="chip">Pattern</span><span class="chip">Size</span></div>
+        <div class="specs"><b>Type</b><span>Instrument (MIDI in)</span><b>Now</b><span>Reference engine: one source per voice, in tune from pure tone to buzz</span><b>Next</b><span>Sides and coupling, bench, then the plugin</span></div>
+        <div class="foot"><span class="avail">In development<small>plugin not built yet</small></span><a class="gel grey" href="https://github.com/bytebent/syrinx">Source</a></div>
+      </div>
+    </article>
+
+    <article class="window card">
+      <div class="titlebar"><span class="closebox"></span><span class="stripes h"><i style="background:var(--green)"></i><i style="background:var(--yellow)"></i></span><span class="t">beak-tube</span><span class="lines"></span></div>
+      <div class="wbody">
+        <div class="screen"><canvas id="c-beak" width="900" height="260"></canvas></div>
+        <div>
+          <span class="status"><span class="led off"></span>In design</span>
+          <h3>beak-tube</h3>
+          <p class="tag">Any sound, through a beak.</p>
+        </div>
+        <p>An effect that sends audio up a trachea, through a throat cavity that retunes itself to the pitch it hears, and out of a beak or an inflated sac. Songbirds use that trick to turn a buzzy source into a pure tone. It makes no sound of its own.</p>
+        <ul>
+          <li>The throat resonance follows the pitch, the way songbirds sing pure notes</li>
+          <li>Song, Parrot, Sac and Boom modes: finch, parakeet, dove coo, cassowary</li>
+          <li>Size matches Syrinx, so the same value gives the same bird</li>
+          <li>Put it on Syrinx, or on voices, synths and drums</li>
+        </ul>
+        <div class="chips"><span class="chip">Size</span><span class="chip">Mode</span><span class="chip">Trachea</span><span class="chip">Track</span><span class="chip">Ring</span><span class="chip">Gape</span><span class="chip">Tongue</span><span class="chip">Sac tune</span><span class="chip">Body</span><span class="chip">Spread</span></div>
+        <div class="specs"><b>Type</b><span>Effect, mono or stereo</span><b>Now</b><span>Design, build plan and research notes</span><b>Next</b><span>Reference engine and browser bench</span></div>
+        <div class="foot"><span class="avail">In development<small>design stage</small></span><a class="gel grey" href="https://github.com/bytebent/beak-tube">Source</a></div>
+      </div>
+    </article>
+  </div>
+
+  <!-- LAB -->
+  <div class="sect" id="lab"><h2>The Lab</h2><span class="rule"></span><span class="sub">ideas, not started</span></div>
+  <div class="grid">
+
+    <article class="window card">
+      <div class="titlebar"><span class="closebox"></span><span class="stripes" style="background:var(--green)"></span><span class="t">Entrainer</span><span class="lines"></span></div>
+      <div class="wbody">
+        <div class="screen"><canvas id="c-entrain" width="600" height="200"></canvas></div>
+        <div><span class="status"><span class="led off"></span>Concept</span><h3>Entrainer</h3><p class="tag">Two sounds that tune each other.</p></div>
+        <p>The strongest partials of two sounds pull on each other's pitch like pendulum clocks falling into sync. They drift into pure intervals and slip back out. Nothing is snapped to a scale.</p>
+        <div class="chips"><span class="chip">Coupling</span><span class="chip">Capture range</span><span class="chip">Ratios</span><span class="chip">Inertia</span><span class="chip">Sync out</span></div>
+        <div class="specs"><b>Inputs</b><span>2: track + sidechain</span><b>Best on</b><span>Dry, sustained sounds</span></div>
+      </div>
+    </article>
+
+    <article class="window card">
+      <div class="titlebar"><span class="closebox"></span><span class="stripes" style="background:var(--orange)"></span><span class="t">Miscorrect</span><span class="lines"></span></div>
+      <div class="wbody">
+        <div class="screen"><canvas id="c-ecc" width="600" height="200"></canvas></div>
+        <div><span class="status"><span class="led off"></span>Concept</span><h3>Miscorrect</h3><p class="tag">Error correction, confidently wrong.</p></div>
+        <p>Your track goes through a simulated digital link, with the sidechain as noise on the line. Nothing happens until the code breaks, then the decoder "fixes" your audio into wrong values, right where the sidechain hits.</p>
+        <div class="chips"><span class="chip">Noise amount</span><span class="chip">Significance</span><span class="chip">Code</span><span class="chip">Interleave</span><span class="chip">Concealment</span></div>
+        <div class="specs"><b>Inputs</b><span>2: track + sidechain</span><b>Latency</b><span>Zero (per-sample codes)</span></div>
+      </div>
+    </article>
+
+    <article class="window card">
+      <div class="titlebar"><span class="closebox"></span><span class="stripes" style="background:var(--purple)"></span><span class="t">Rank Swap</span><span class="lines"></span></div>
+      <div class="wbody">
+        <div class="screen"><canvas id="c-rank" width="600" height="200"></canvas></div>
+        <div><span class="status"><span class="led off"></span>Concept</span><h3>Rank Swap</h3><p class="tag">Not a vocoder. Energy, reassigned.</p></div>
+        <p>Each frame, the loudest part of your track moves to the loudest frequency of the sidechain, the second loudest to the second, and so on. You get one sound's density in the other's shape.</p>
+        <div class="chips"><span class="chip">Top-N</span><span class="chip">Band mode</span><span class="chip">Phase source</span><span class="chip">Smoothing</span><span class="chip">Rank mix</span></div>
+        <div class="specs"><b>Inputs</b><span>2: track + sidechain</span><b>Latency</b><span>One FFT window</span></div>
+      </div>
+    </article>
+
+    <article class="window card">
+      <div class="titlebar"><span class="closebox"></span><span class="stripes" style="background:var(--yellow)"></span><span class="t">Tri-Mode Vocoder</span><span class="lines"></span></div>
+      <div class="wbody">
+        <div class="screen"><canvas id="c-voc" width="600" height="200"></canvas></div>
+        <div><span class="status"><span class="led off"></span>Concept</span><h3>Tri-Mode Vocoder</h3><p class="tag">Clarity, resonance, bandwidth.</p></div>
+        <p>A vocoder that never touches volume. The modulator's bands set the carrier's bit depth, filter resonance or update rate instead, so you hear a performance as precision, ringing and freshness.</p>
+        <div class="chips"><span class="chip">Mode</span><span class="chip">Bands</span><span class="chip">Range</span><span class="chip">Curve</span><span class="chip">Invert</span></div>
+        <div class="specs"><b>Inputs</b><span>2: carrier + modulator</span><b>Latency</b><span>Essentially zero</span></div>
+      </div>
+    </article>
+
+    <article class="window card">
+      <div class="titlebar"><span class="closebox"></span><span class="stripes" style="background:var(--blue)"></span><span class="t">Homebody LFO</span><span class="lines"></span></div>
+      <div class="wbody">
+        <div class="screen"><canvas id="c-lfo" width="600" height="200"></canvas></div>
+        <div><span class="status"><span class="led off"></span>Concept</span><h3>Homebody LFO</h3><p class="tag">Random, but it likes it here.</p></div>
+        <p>A random LFO with a favourite value. Set where it likes to stay and how strongly; it lingers near home and makes rare trips out. Jumps or drift, three weighting shapes, mappable to anything.</p>
+        <div class="chips"><span class="chip">Bias</span><span class="chip">Weight</span><span class="chip">Motion</span><span class="chip">Weighting</span><span class="chip">Smoothing</span><span class="chip">Seed</span></div>
+        <div class="specs"><b>Format</b><span>Max for Live device</span><b>Latency</b><span>None</span></div>
+      </div>
+    </article>
+
+    <article class="window card">
+      <div class="titlebar"><span class="closebox"></span><span class="stripes" style="background:var(--red)"></span><span class="t">Dither Ghost</span><span class="lines"></span></div>
+      <div class="wbody">
+        <div class="screen"><canvas id="c-dither" width="600" height="200"></canvas></div>
+        <div><span class="status"><span class="led off"></span>Concept</span><h3>Dither Ghost</h3><p class="tag">A bitcrusher haunted by your sample.</p></div>
+        <p>Instead of random dither noise, a sample you load decides which way every value rounds. Your track comes out crushed, with the sample's pitch and rhythm living inside the grain.</p>
+        <div class="chips"><span class="chip">Bit depth</span><span class="chip">Amount</span><span class="chip">Subtractive</span><span class="chip">Loop / Retrigger</span><span class="chip">Transpose</span></div>
+        <div class="specs"><b>Inputs</b><span>1 + loaded sample</span><b>Latency</b><span>Zero</span></div>
+      </div>
+    </article>
+  </div>
+
+  <!-- ABOUT -->
+  <div class="sect" id="about"><h2>About</h2><span class="rule"></span></div>
+  <section class="window about">
+    <div class="titlebar"><span class="closebox"></span><span class="lines"></span><span class="t">ReadMe.txt</span><span class="lines"></span></div>
+    <div class="wbody">
+      <div>
+        <h3>What these are</h3>
+        <p>Small, odd effects and instruments for producers who like happy accidents. Some take an idea from computing, like data compression or error-correcting codes. Others model how bodies actually make sound, from the human larynx to dolphins and songbirds, then push past what any real animal can do.</p>
+        <p>Many of them take a second input through your DAW's sidechain, so one track can reshape another.</p>
+      </div>
+      <div>
+        <h3>Compatibility</h3>
+        <p>Bandwidth Crusher, Bandwidth Brawl, Throat and mouth-tube run as AU and VST3 on macOS, Apple Silicon and Intel, plus a standalone app. Dolphin, Syrinx and beak-tube are on their way to the same formats. krill runs in the browser and renders WAV files.</p>
+        <p>All the code is public on GitHub.</p>
+        <div class="btnrow"><a class="gel grey" href="https://github.com/bytebent">Source on GitHub</a></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="badges" aria-hidden="true">
+    <span class="badge88" style="background:linear-gradient(90deg,var(--green),var(--yellow),var(--orange),var(--red),var(--purple),var(--blue));color:#fff;text-shadow:0 1px 1px #000">MADE ON<br>A MAC</span>
+    <span class="badge88" style="background:#000;color:#3f3">AU / VST3<br>READY</span>
+    <span class="badge88" style="background:var(--platinum);color:#000">BEST HEARD<br>ON HEADPHONES</span>
+    <span class="badge88" style="background:var(--blue);color:#fff">SIDECHAIN<br>POWERED</span>
+  </div>
+  <p class="small">You are visitor <span class="counter">000451</span> · © 2026 bytebent · best viewed at 800×600</p>
+</div>
+
+<script>
+(function(){
+  // seeded random so drawings look the same every load
+  function R(seed){ let s = seed; return () => (s = (s * 16807) % 2147483647) / 2147483647; }
+  const C = { green:[97,187,70], yellow:[253,184,39], orange:[245,130,31], red:[224,58,62], purple:[150,61,151], blue:[0,157,220], grey:[85,85,92] };
+  const rgb = a => `rgb(${a.join(',')})`;
+  const rgba = (a,o) => `rgba(${a.join(',')},${o})`;
+  const mix = (a,b,t) => a.map((v,i) => Math.round(v + (b[i]-v)*t));
+  const ctx = id => { const c = document.getElementById(id); return c ? [c.getContext('2d'), c.width, c.height] : null; };
+  const rainbow = [C.green,C.yellow,C.orange,C.red,C.purple,C.blue];
+
+  function playhead(x,W,H,p){ const px = Math.floor(W*p); x.fillStyle='#fff'; x.shadowColor='#fff'; x.shadowBlur=8; x.fillRect(px,0,3,H); x.shadowBlur=0; }
+
+  // loop strip: fresh audio in colour, stale fading to grey
+  function loopStrip(id, seed, colourFor, p, n){
+    const g = ctx(id); if(!g) return; const [x,W,H] = g; const r = R(seed); const N = n||220, bw = W/N, mid = H/2;
+    x.clearRect(0,0,W,H);
+    for(let i=0;i<N;i++){
+      const age = Math.min(1, (((p - i/N) + 1) % 1) * 1.15 + r()*0.12);
+      const amp = (0.25 + 0.55*Math.abs(Math.sin(i*0.11)) * (0.6+r()*0.4)) * (i%23<2 ? 1.3 : 1);
+      const col = mix(colourFor(i, r), C.grey, Math.pow(age,0.8)*0.9);
+      x.fillStyle = rgb(col); const h = Math.min(.95,amp)*H*0.46;
+      x.fillRect(Math.floor(i*bw), mid-h, Math.ceil(bw)-1, h*2);
+    }
+    playhead(x,W,H,p);
+  }
+
+  // hero: animated crusher strip
+  let hp = 0.3;
+  function hero(){
+    loopStrip('hero', 11, i => rainbow[Math.floor(i/220*6)%6], hp, 180);
+    hp = (hp + 0.004) % 1;
+    const s = document.getElementById('heroStat'); if (s) s.textContent = 'FRESH ' + (55 + Math.round(10*Math.sin(hp*12))) + '%';
+  }
+  const still = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  hero(); if(!still) setInterval(hero, 50);
+
+  loopStrip('c-crusher', 3, i => rainbow[Math.floor(i/220*6)%6], 0.58);
+
+  // brawl: patchwork of A (blue) and B (red)
+  (function(){
+    let owner='A', run=0; const rr = R(7);
+    const own = [];
+    for(let i=0;i<220;i++){ if(run<=0){ owner = owner==='A' ? 'B' : 'A'; run = 3+Math.floor(rr()*16);} run--; own.push(owner); }
+    loopStrip('c-brawl', 5, i => own[i]==='A' ? C.blue : C.red, 0.63);
+  })();
+
+  // throat: glottal flow pulses (red), breath puffs on each opening (blue), creaky and uneven at the end
+  (function(){
+    const g = ctx('c-throat'); if(!g) return; const [x,W,H] = g; const r = R(53);
+    const base = H*0.82, top = H*0.14;
+    let t = 14, k = 0;
+    const pulses = [];
+    while (t < W - 10){
+      const creak = t > W*0.66;
+      const period = (creak ? 78 + (k%2 ? 34 : 0) : 62) * (1 + (r()-0.5)*0.12);
+      const amp = (creak ? (k%2 ? 0.5 : 1) : 0.92) * (0.88 + r()*0.12);
+      const open = period * (creak ? 0.38 : 0.62);
+      pulses.push([t, open, amp]); t += period; k++;
+    }
+    pulses.forEach(([t0, open, amp]) => {
+      for (let i=0;i<34;i++){
+        const u = r(), px = t0 + u*open, h = Math.sin(Math.PI*u)*amp;
+        const py = base - h*(base-top)*(0.2 + r()*0.9) - r()*10;
+        x.fillStyle = `rgba(0,157,220,${0.25 + r()*0.45})`; x.fillRect(px, py, 2, 2);
+      }
+    });
+    x.strokeStyle = rgb(C.red); x.lineWidth = 3; x.lineJoin='round'; x.beginPath(); x.moveTo(0, base);
+    pulses.forEach(([t0, open, amp]) => {
+      x.lineTo(t0, base);
+      for (let s=0;s<=open;s+=2){
+        const u = s/open, shape = Math.pow(Math.sin(Math.PI*Math.pow(u,0.72)), 1.4);
+        x.lineTo(t0+s, base - shape*amp*(base-top));
+      }
+      x.lineTo(t0+open, base);
+    });
+    x.lineTo(W, base); x.stroke();
+    x.fillStyle='rgba(255,255,255,.18)'; x.fillRect(0, base+4, W, 1);
+  })();
+
+  // mouth-tube: 40 tube sections from glottis to lips, nasal branch at the velum, spectrum above
+  (function(){
+    const g = ctx('c-tube'); if(!g) return; const [x,W,H] = g;
+    const N = 40, left = 40, right = W-40, sw = (right-left)/N, mid = H*0.66, maxR = H*0.26;
+    const radius = i => {
+      const u = i/(N-1);
+      const pharynx = 0.32 + 0.1*Math.sin(u*9);
+      const shape = u < 0.45 ? pharynx : 0.35 + 0.65*Math.sin(Math.PI*Math.min(1,(u-0.45)/0.5))*0.9;
+      return Math.max(0.12, Math.min(1, shape));
+    };
+    for (let i=0;i<N;i++){
+      const rr = radius(i)*maxR, col = mix(C.blue, C.purple, i/(N-1));
+      x.fillStyle = rgb(col); x.fillRect(left + i*sw + 1, mid - rr, sw - 2, rr*2);
+    }
+    const vx = left + 17*sw;
+    x.fillStyle = 'rgba(0,157,220,.75)';
+    for (let j=0;j<12;j++){ const nx = vx + j*sw*0.9, ny = mid - maxR*0.55 - 18 - j*2.2; x.fillRect(nx, ny-6, sw*0.9-2, 12); }
+    x.fillStyle='rgba(255,255,255,.55)'; x.font='16px Monaco, monospace';
+    x.fillText('glottis', left-6, H-10); x.fillText('lips', right-36, H-10); x.fillText('nose', vx + 12*sw*0.9 + 6, mid - maxR*0.55 - 40);
+    x.strokeStyle = rgb(C.red); x.lineWidth = 2.5; x.beginPath();
+    const peaks = [[0.12,1],[0.28,0.8],[0.55,0.45],[0.75,0.3]];
+    for (let px=left; px<=right; px+=3){
+      const u = (px-left)/(right-left);
+      let v = 0; peaks.forEach(([f,a]) => v += a*Math.exp(-Math.pow((u-f)/0.045,2)));
+      v = Math.min(1, v*0.9 + 0.06*(1-u));
+      const y = H*0.24 - v*H*0.19;
+      px===left ? x.moveTo(px,y) : x.lineTo(px,y);
+    }
+    x.stroke();
+  })();
+
+  // dolphin: a click train that speeds up into a buzz, then a whistle contour with sidebands
+  (function(){
+    const g = ctx('c-dolphin'); if(!g) return; const [x,W,H] = g; const r = R(61);
+    const mid = H*0.62, split = W*0.48;
+    // clicks: gap shrinks as the rate rises
+    let t = 18, gap = 46;
+    while (t < split){
+      const a = 0.55 + r()*0.4;
+      x.strokeStyle = rgba(C.blue, 0.95); x.lineWidth = 3;
+      x.beginPath(); x.moveTo(t, mid - a*H*0.42); x.lineTo(t, mid + a*H*0.3); x.stroke();
+      x.strokeStyle = rgba(C.blue, 0.35); x.lineWidth = 1.5;
+      x.beginPath(); x.moveTo(t+4, mid - a*H*0.25); x.lineTo(t+4, mid + a*H*0.16); x.stroke();
+      t += gap; gap = Math.max(6, gap*0.83);
+    }
+    // whistle: upsweep then loop back down, with faint sidebands from the pulse source
+    const contour = u => 0.78 - 0.5*Math.sin(Math.PI*Math.min(1,u*1.15)) + 0.12*Math.sin(u*9);
+    [[-0.09,0.22],[0.09,0.22],[0,1]].forEach(([off,o]) => {
+      x.strokeStyle = rgba(o===1 ? [120,215,250] : C.blue, o); x.lineWidth = o===1 ? 4 : 2;
+      x.beginPath();
+      for (let px = split; px <= W-16; px += 3){
+        const u = (px-split)/(W-16-split);
+        const y = (contour(u) + off) * H;
+        px===split ? x.moveTo(px,y) : x.lineTo(px,y);
+      }
+      x.stroke();
+    });
+    x.fillStyle='rgba(255,255,255,.5)'; x.font='16px Monaco, monospace';
+    x.fillText('clicks → buzz', 18, H-10); x.fillText('whistle', W-90, H-10);
+  })();
+
+  // krill: six lanes in stripe order, calls as blobs, answers linked by thin lines
+  (function(){
+    const g = ctx('c-krill'); if(!g) return; const [x,W,H] = g; const r = R(73);
+    const lanes = 6, top = 16, lh = (H-32)/lanes, calls = [];
+    for (let l=0;l<lanes;l++){
+      x.fillStyle='rgba(255,255,255,.05)'; x.fillRect(0, top + l*lh + lh/2 - 1, W, 1);
+      let t = 10 + r()*80;
+      while (t < W-30){
+        const len = 18 + r()*70, loud = 0.3 + r()*0.7;
+        calls.push([l, t, len, loud]);
+        t += len + 40 + r()*170;
+      }
+    }
+    // answers: link some calls to a later call in another lane
+    x.strokeStyle='rgba(255,255,255,.35)'; x.lineWidth=1.5;
+    calls.forEach(([l,t,len]) => {
+      if (r() < 0.35){
+        const ans = calls.find(c => c[0]!==l && c[1] > t+len && c[1] < t+len+120);
+        if (ans){ x.beginPath(); x.moveTo(t+len, top+l*lh+lh/2); x.lineTo(ans[1], top+ans[0]*lh+lh/2); x.stroke(); }
+      }
+    });
+    calls.forEach(([l,t,len,loud]) => {
+      const y = top + l*lh + lh/2, h = lh*0.62*loud;
+      x.fillStyle = rgba(rainbow[l], 0.35 + loud*0.65);
+      x.beginPath(); x.roundRect ? x.roundRect(t, y-h/2, len, h, h/2) : x.rect(t, y-h/2, len, h); x.fill();
+    });
+  })();
+
+  // syrinx: one sweep handed from the left side (low) to the right side (high), with harmonics
+  (function(){
+    const g = ctx('c-syrinx'); if(!g) return; const [x,W,H] = g;
+    const yOf = f => H*0.9 - f*H*0.78;      // f: 0..1
+    const splitF = 0.42;
+    x.setLineDash([8,8]); x.strokeStyle='rgba(255,255,255,.3)'; x.lineWidth=1.5;
+    x.beginPath(); x.moveTo(0, yOf(splitF)); x.lineTo(W, yOf(splitF)); x.stroke(); x.setLineDash([]);
+    x.fillStyle='rgba(255,255,255,.5)'; x.font='16px Monaco, monospace';
+    x.fillText('split', W-60, yOf(splitF)-8);
+    const sweep = u => 0.08 + 0.75*Math.pow(Math.sin(Math.PI*0.5*Math.min(1,u*1.25)),1.3) - (u>0.8 ? (u-0.8)*1.6 : 0);
+    // harmonics: strong while low (pulse-like), fading as it rises (tonal)
+    for (let hN=3; hN>=1; hN--){
+      for (let px=20; px<W-20; px+=3){
+        const u = (px-20)/(W-40), f = sweep(u), f2 = sweep((px+3-20)/(W-40));
+        const right = f > splitF;
+        const base = right ? [190,235,170] : C.green;
+        const o = hN===1 ? 1 : Math.max(0, (0.6 - f) * (hN===2 ? 0.9 : 0.6));
+        if (o <= 0.02) continue;
+        const ya = yOf(Math.min(1, f*hN*0.55 + (hN===1 ? f*0.45 : 0)));
+        const yb = yOf(Math.min(1, f2*hN*0.55 + (hN===1 ? f2*0.45 : 0)));
+        x.strokeStyle = rgba(base, o); x.lineWidth = hN===1 ? 4 : 2;
+        x.beginPath(); x.moveTo(px, ya); x.lineTo(px+3, yb); x.stroke();
+      }
+    }
+    x.fillStyle='rgba(255,255,255,.5)';
+    x.fillText('left side', 24, H-10); x.fillText('right side', W*0.48, 26);
+  })();
+
+  // beak-tube: harmonic bars of a buzzy source, a resonance that sits on the sung note, the tract below
+  (function(){
+    const g = ctx('c-beak'); if(!g) return; const [x,W,H] = g;
+    const left = 30, right = W-30, baseY = H*0.5, top = H*0.08;
+    const f0 = 0.11, peakF = 0.22;   // resonance tracks the 2nd harmonic here
+    for (let k=1; k*f0 < 0.98; k++){
+      const fx = left + k*f0*(right-left);
+      const src = 0.75/Math.sqrt(k);
+      const res = Math.exp(-Math.pow((k*f0-peakF)/0.035,2));
+      x.fillStyle = 'rgba(255,255,255,.18)'; x.fillRect(fx-5, baseY - src*(baseY-top), 10, src*(baseY-top));
+      x.fillStyle = rgb(C.yellow); x.fillRect(fx-5, baseY - Math.max(0.03,res)*src*(baseY-top)*1.25, 10, Math.max(0.03,res)*src*(baseY-top)*1.25);
+    }
+    x.strokeStyle = rgba(C.yellow, .7); x.lineWidth = 2; x.beginPath();
+    for (let px=left; px<=right; px+=3){
+      const u=(px-left)/(right-left), v = Math.exp(-Math.pow((u-peakF)/0.05,2));
+      const y = baseY - v*(baseY-top)*0.95 - 4;
+      px===left ? x.moveTo(px,y) : x.lineTo(px,y);
+    }
+    x.stroke();
+    // tract: long thin trachea, a throat cavity, an open beak
+    const ty = H*0.78;
+    x.fillStyle = rgb(C.green);
+    x.fillRect(left, ty-7, (right-left)*0.55, 14);
+    const cx = left + (right-left)*0.66;
+    x.beginPath(); x.ellipse(cx, ty, (right-left)*0.11, 30, 0, 0, Math.PI*2); x.fill();
+    x.beginPath(); x.moveTo(cx + (right-left)*0.1, ty-22); x.lineTo(right, ty-34); x.lineTo(right, ty-26); x.lineTo(cx + (right-left)*0.12, ty);
+    x.lineTo(right, ty+26); x.lineTo(right, ty+34); x.lineTo(cx + (right-left)*0.1, ty+22); x.closePath(); x.fill();
+    x.fillStyle='rgba(255,255,255,.5)'; x.font='16px Monaco, monospace';
+    x.fillText('trachea', left, ty+30); x.fillText('throat', cx-28, ty+50); x.fillText('beak', right-44, ty+52);
+  })();
+
+  // entrainer: partial tracks converging and slipping
+  (function(){
+    const g = ctx('c-entrain'); if(!g) return; const [x,W,H] = g;
+    const pairs = [[.22,.30],[.48,.42],[.72,.80]];
+    pairs.forEach(([a,b],k) => {
+      [[a,C.green],[b,[190,240,170]]].forEach(([y0,col],j) => {
+        x.strokeStyle = rgb(col); x.lineWidth = 3; x.beginPath();
+        for(let t=0;t<=W;t+=4){
+          const u = t/W, target = (a+b)/2;
+          const lock = Math.min(1, u*1.8) * (1 - 0.8*Math.max(0, Math.sin(u*9+k*2)-0.85)*6);
+          const y = (y0 + (target-y0)*Math.max(0,Math.min(1,lock))) * H + Math.sin(u*40+k+j)*1.5;
+          t ? x.lineTo(t,y) : x.moveTo(t,y);
+        }
+        x.stroke();
+      });
+    });
+  })();
+
+  // miscorrect: clean sine, then glitch jumps in bursts
+  (function(){
+    const g = ctx('c-ecc'); if(!g) return; const [x,W,H] = g; const r = R(19);
+    const burst = u => (u>.35&&u<.45)||(u>.62&&u<.68)||(u>.82&&u<.92);
+    x.fillStyle='rgba(245,130,31,.13)';
+    [[.35,.45],[.62,.68],[.82,.92]].forEach(([a,b])=>x.fillRect(a*W,0,(b-a)*W,H));
+    x.strokeStyle = rgb(C.orange); x.lineWidth = 2.5; x.beginPath();
+    let held = 0;
+    for(let t=0;t<=W;t+=3){
+      const u = t/W; let v = Math.sin(u*Math.PI*10)*0.7;
+      if (burst(u) && r()<0.25) held = (Math.floor(r()*8)-4)/5;
+      if (burst(u) && held) v += held; if (!burst(u)) held = 0;
+      v = Math.round(v*8)/8;
+      const y = H/2 - v*H*0.4;
+      t ? x.lineTo(t,y) : x.moveTo(t,y);
+    }
+    x.stroke();
+  })();
+
+  // rank swap: two spectra, lines showing reassignment
+  (function(){
+    const g = ctx('c-rank'); if(!g) return; const [x,W,H] = g; const r = R(23); const N = 24, bw = W/N;
+    const a = Array.from({length:N},(_,i)=>Math.exp(-i/6)*(0.6+r()*0.4));
+    const b = Array.from({length:N},()=>r());
+    const aS = [...a].sort((p,q)=>q-p), bIdx = [...b.keys()].sort((p,q)=>b[q]-b[p]);
+    const out = new Array(N); bIdx.forEach((bi,k)=>out[bi]=aS[k]);
+    for(let i=0;i<N;i++){
+      x.fillStyle='rgba(150,61,151,.35)'; const ha = a[i]*H*0.4; x.fillRect(i*bw+2, H/2-ha, bw-4, ha);
+      x.fillStyle=rgb(C.purple); const ho = out[i]*H*0.4; x.fillRect(i*bw+2, H/2+2, bw-4, ho);
+    }
+    x.fillStyle='rgba(255,255,255,.25)'; x.fillRect(0,H/2,W,1);
+  })();
+
+  // tri-mode vocoder: bands rendered crunchy / ringing / frozen
+  (function(){
+    const g = ctx('c-voc'); if(!g) return; const [x,W,H] = g; const N = 12, bh = H/N;
+    for(let b=0;b<N;b++){
+      const mode = b%3, lvl = 0.3+0.7*Math.abs(Math.sin(b*1.7));
+      x.strokeStyle = rgb(mix(C.yellow,C.grey, 1-lvl)); x.lineWidth = 2; x.beginPath();
+      const y0 = b*bh + bh/2;
+      for(let t=0;t<=W;t+=3){
+        const u=t/W; let v;
+        if(mode===0) v = Math.round(Math.sin(u*60+b)*(2+lvl*6))/(2+lvl*6);
+        else if(mode===1) v = Math.sin(u*(40+b*6))*Math.exp(-((u*5)%1)*(1.5-lvl));
+        else v = Math.sin(((u*W)%60)/60*Math.PI*2*3+b);
+        const y = y0 - v*bh*0.38;
+        t ? x.lineTo(t,y) : x.moveTo(t,y);
+      }
+      x.stroke();
+    }
+  })();
+
+  // homebody lfo: random line hovering near a bias line
+  (function(){
+    const g = ctx('c-lfo'); if(!g) return; const [x,W,H] = g; const r = R(41); const bias = .3;
+    x.setLineDash([6,6]); x.strokeStyle='rgba(0,157,220,.45)'; x.lineWidth=1.5;
+    x.beginPath(); x.moveTo(0,H*bias); x.lineTo(W,H*bias); x.stroke(); x.setLineDash([]);
+    x.strokeStyle = rgb(C.blue); x.lineWidth = 3; x.beginPath();
+    let v = bias, target = bias;
+    for(let t=0;t<=W;t+=3){
+      if (t % 45 === 0){ target = r()<0.15 ? 0.1+r()*0.85 : bias + (r()-0.5)*0.12; }
+      v += (target - v)*0.12;
+      const y = v*H; t ? x.lineTo(t,y) : x.moveTo(t,y);
+    }
+    x.stroke();
+  })();
+
+  // dither ghost: staircase crush with a sample's wobble in the grain
+  (function(){
+    const g = ctx('c-dither'); if(!g) return; const [x,W,H] = g; const steps = 6;
+    x.strokeStyle='rgba(224,58,62,.3)'; x.lineWidth=1.5; x.beginPath();
+    for(let t=0;t<=W;t+=2){ const v=Math.sin(t/W*Math.PI*4)*0.8; const y=H/2-v*H*0.4; t?x.lineTo(t,y):x.moveTo(t,y);} x.stroke();
+    x.strokeStyle = rgb(C.red); x.lineWidth = 2.5; x.beginPath();
+    for(let t=0;t<=W;t+=2){
+      const u=t/W, sig=Math.sin(u*Math.PI*4)*0.8, ghost=Math.sin(u*Math.PI*88)*0.09*(1+Math.sin(u*12));
+      const q = Math.round((sig+ghost)*steps)/steps; const y = H/2 - q*H*0.4;
+      t ? x.lineTo(t,y) : x.moveTo(t,y);
+    }
+    x.stroke();
+  })();
+
+  // menu bar clock
+  function tick(){ const el=document.getElementById('clock'); if(el) el.textContent = new Date().toLocaleTimeString([], {hour:'numeric', minute:'2-digit'}); }
+  tick(); setInterval(tick, 15000);
+})();
+</script>
+</body>
+</html>
