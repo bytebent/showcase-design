@@ -397,7 +397,30 @@ li{margin:3px 0}
         <p class="k"><b>State:</b> design, build plan and research notes in the repo; reference engine first.</p>
       </div>
     </div>
-    <p class="small soft">More ideas from the same research thread (tymbal, swim bladder, croak, stridulation, parasaurolophus, multiple mouths, geophony and others) are kept in <code>synth-ideas.md</code> and aren't on any roadmap yet.</p>
+
+    <h3>Future ideas <span class="tag open">Unsure</span></h3>
+    <p class="soft small">Kept for later, from <code>synth-ideas.md</code>. Nothing here is decided: not whether they get made, their names, whether they are separate plugins or modes, or how they are built. Sources make sound; bodies shape it, as Throat → mouth-tube.</p>
+    <div class="scroll"><table class="tbl">
+      <tr><th>Name</th><th>Type</th><th>Idea</th></tr>
+      <tr><td colspan="3"><b>Natural</b></td></tr>
+      <tr><td><b>sonic-muscle <span class="soft">(working name)</span></b></td><td>source</td><td>Fish drumming muscle. Twitch rate, twitch shape, left/right phase, fatigue. Pitch follows muscle rate.</td></tr>
+      <tr><td><b>fish-bladder</b></td><td>body</td><td>Swim bladder as a nonlinear gas bubble. Depth, volume, wall stiffness, chambers, side pouches, tissue load. Forced drum ↔ resonant whistle.</td></tr>
+      <tr><td><b>tymbal</b></td><td>source</td><td>Ribbed membrane that buckles rib by rib, in and out. Abdomen resonator.</td></tr>
+      <tr><td><b>stridulation</b></td><td>source</td><td>File and scraper, stick-slip friction. Escapement knob: cricket pure tone ↔ katydid broadband.</td></tr>
+      <tr><td><b>croak</b></td><td>source</td><td>Frog vocal folds with extra fibrous masses: two-pitch and chaotic calls.</td></tr>
+      <tr><td><b>croak-sack</b></td><td>body</td><td>Elastic vocal sac; inflation as a gesture, air shuttling between lungs and sac.</td></tr>
+      <tr><td><b>Melon</b></td><td>body (effect)</td><td>Substance-filled chamber. Fast acoustic grid + slow fluid layer; loud input stirs the fluid, which reshapes the sound. Substances: water, oil, honey, gel, bubbly, non-Newtonian.</td></tr>
+      <tr><td colspan="3"><b>Alien</b></td></tr>
+      <tr><td><b>parasaurolophus</b></td><td>body</td><td>Long folded crest tube; size, chamber and loop controls.</td></tr>
+      <tr><td><b>multiple mouths</b></td><td>body</td><td>Two or more exits sharing one source, each with its own closure and resonance.</td></tr>
+      <tr><td><b>tongue-hydra</b></td><td>body</td><td>Several constrictions moving independently. Each tight spot makes its own turbulent noise: a chorus of hisses inside one tract, not just shifting formants. Each tongue could be a small Krell agent.</td></tr>
+      <tr><td><b>bifid-throat</b></td><td>body</td><td>Two branches that rejoin; their path difference gives comb-like notches that sweep as a branch lengthens. The moving antiresonance is its signature.</td></tr>
+      <tr><td><b>tririnx</b></td><td>source</td><td>Syrinx with N sides instead of two.</td></tr>
+      <tr><td><b>chimera</b></td><td>source + body</td><td>A free source → body host, e.g. a larynx as one of a syrinx's sources, through a dolphin-like body.</td></tr>
+      <tr><td><b>lunged-throat</b></td><td>source</td><td>Phonation that flips direction. The asymmetry between in and out (fold behaviour, noise) and the moment of reversal are where the character is.</td></tr>
+      <tr><td colspan="3"><b>Other</b></td></tr>
+      <tr><td><b>geophony</b></td><td>generator</td><td>Wind, water, rain, bubbles, ice, fire, thunder. Could be a weather layer under krill.</td></tr>
+    </table></div>
 
     <h2>The Lab</h2>
     <p class="soft">Concepts with names, art and parameter lists on the showcase page, none built yet. Each takes one stripe colour.</p>
@@ -603,6 +626,7 @@ li{margin:3px 0}
       <li><b>Voice pair.</b> Product status (part of the Lab or its own series), whether mouth-tube takes Throat's noise stream for fricatives, and whether "mouth-tube" is the final name (a formant "mouth" could still follow).</li>
       <li><b>Brawl commit author.</b> Its one commit is authored as "Claude &lt;noreply@anthropic.com&gt;"; amend to <code>bytebent</code> and force-push.</li>
       <li><b>Real-DAW testing.</b> The <code>latest</code> builds of Brawl, Throat and mouth-tube passed CI (auval, pluginval); they still need checking in Ableton and other hosts.</li>
+      <li><b>Future ideas.</b> Which, if any, of the unsure creature ideas get researched next, and which are modes of existing products rather than new plugins.</li>
       <li><b>Creatures.</b> Is "the Creatures" the family name; Syrinx and beak-tube accent colours; plugin codes for Dolphin, Syrinx and beak-tube; does krill become a plugin or stay a browser tool.</li>
       <li><b>Where the Max for Live LFO sits</b> in a brand that's otherwise AU/VST3.</li>
       <li><b>Brand checks.</b> Domain, handles and trademark availability for "bytebent".</li>
